@@ -40,6 +40,48 @@ def export_button(df, nombre):
         with open(ruta, "rb") as fh:
             st.download_button("Descargar Excel", fh, file_name=nombre, key="dl_"+nombre)
 
+# ---- estilo "vigentes" tipo streamlit_app.py (colores por estado) ----
+import re, unicodedata
+from datetime import datetime
+
+COLOR_ESTADO = {"Abierta": "#E1F5EE", "Cierra pronto": "#FAEEDA",
+                "Vencida": "#FCEBEB", "Sin fecha": "#F1EFE8"}
+
+def _norm(t):
+    if not t: return ""
+    t = unicodedata.normalize("NFKD", str(t))
+    return "".join(c for c in t if not unicodedata.combining(c)).lower()
+
+def _separar(txt):
+    return [x.strip() for x in re.split(r"[,\n]", txt) if x.strip()]
+
+def estado_por_fecha(fecha_str):
+    if not fecha_str:
+        return "Sin fecha", None
+    for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y"):
+        try:
+            f = datetime.strptime(str(fecha_str).strip(), fmt)
+            dias = (f.date() - datetime.now().date()).days
+            if dias < 0: estado = "Vencida"
+            elif dias <= 7: estado = "Cierra pronto"
+            else: estado = "Abierta"
+            return estado, dias
+        except ValueError:
+            continue
+    return "Sin fecha", None
+
+def _colorea(fila):
+    c = COLOR_ESTADO.get(fila.get("Estado"), "")
+    return [f"background-color: {c}" for _ in fila]
+
+def etiqueta_de(texto, etiquetas, excluir):
+    if any(x in texto for x in excluir): return None
+    for et in etiquetas:
+        toks = [t for t in _norm(et).split() if len(t) >= 4]
+        if toks and all(t in texto for t in toks):
+            return et
+    return None
+
 st.set_page_config(page_title="Monitor de Licitaciones - Brighter", layout="wide")
 
 if "vista" not in st.session_state:
@@ -93,7 +135,7 @@ def vista_perucompras():
 # VISTA: SEACE / OECE (la de siempre)
 # ================================================================
 def vista_seace():
-    st.title("Monitor de Licitaciones - Brighter Peru")
+    st.title("📡 Tracker de Licitaciones — Brighter Perú")
     st.caption("Pantallas interactivas, pizarras digitales, kioscos y equipamiento audiovisual. Fuente: OECE / SEACE.")
 
     if st.button("📦 Ver Perú Compras (Catálogos Electrónicos)"):
@@ -107,30 +149,70 @@ def vista_seace():
         if df.empty:
             st.warning("Sin datos vigentes. Corre:  python src/vigentes.py")
         else:
-            st.sidebar.header("Filtros - Vigentes")
-            objetos = sorted(x for x in df["objeto"].dropna().unique() if x)
-            so = st.sidebar.multiselect("Objeto", objetos, key="v_obj")
+            claves_cfg = cfg().get("palabras_clave", [])
+            if isinstance(claves_cfg, dict):
+                claves_cfg = [t for terms in claves_cfg.values() for t in terms]
+            excluir_cfg = cfg().get("palabras_excluir", [])
+
+            st.sidebar.header("🏷️ Etiquetas de búsqueda")
+            st.sidebar.caption("Separa por coma o por línea. Edita para investigar otros productos.")
+            txt_etiquetas = st.sidebar.text_area("Etiquetas de interés",
+                value="\n".join(claves_cfg), height=180, key="v_etq")
+            txt_excluir = st.sidebar.text_area("Excluir (una por línea)",
+                value="\n".join(excluir_cfg), height=90, key="v_exc")
+            etiquetas = _separar(txt_etiquetas)
+            excluir = [_norm(e) for e in _separar(txt_excluir)]
+
+            df = df.copy()
+            df["_texto"] = (df["objeto"].fillna("") + " " + df["descripcion"].fillna("") + " " +
+                             df["nomenclatura"].fillna("") + " " + df["entidad"].fillna("")).apply(_norm)
+            df["Etiqueta"] = df["_texto"].apply(lambda t: etiqueta_de(t, etiquetas, excluir))
+            rel = df[df["Etiqueta"].notna()].drop(columns=["_texto"])
+
+            est = rel["fecha_fin_inscripcion"].apply(estado_por_fecha)
+            rel = rel.assign(Estado=[e[0] for e in est], **{"Dias restantes": [e[1] for e in est]})
+
+            st.sidebar.divider()
+            st.sidebar.header("Filtros")
             vmin = st.sidebar.number_input("Valor referencial minimo (S/)", 0, step=1000, value=0, key="v_min")
             txt = st.sidebar.text_input("Buscar en descripcion/entidad", key="v_txt")
-            f = df.copy()
-            if so: f = f[f["objeto"].isin(so)]
+
+            f = rel.copy()
             if vmin: f = f[f["valor_referencial"].fillna(0) >= vmin]
             if txt:
                 t = txt.lower()
                 f = f[f["descripcion"].str.lower().str.contains(t, na=False) |
                       f["entidad"].str.lower().str.contains(t, na=False)]
+
             c1, c2, c3 = st.columns(3)
-            c1.metric("Oportunidades vigentes", len(f))
-            c2.metric("Valor referencial total", f"S/ {f['valor_referencial'].fillna(0).sum():,.0f}")
-            c3.metric("Entidades", f["entidad"].nunique())
-            st.dataframe(
-                f[["nomenclatura","entidad","objeto","descripcion","valor_referencial","moneda",
-                   "fecha_fin_inscripcion","fecha_presentacion","enlace"]]
-                  .sort_values("fecha_fin_inscripcion"),
-                use_container_width=True, hide_index=True,
-                column_config={"enlace": st.column_config.LinkColumn("enlace")},
-            )
-            export_button(f, "vigentes_export.xlsx")
+            c1.metric("Oportunidades encontradas", len(f))
+            c2.metric("Etiquetas activas", len(etiquetas))
+            c3.metric("Procesos revisados", f"{len(df):,}")
+
+            if f.empty:
+                st.warning("Ninguna oportunidad vigente coincide con las etiquetas actuales. "
+                           "Prueba agregando o cambiando términos en el panel de la izquierda.")
+            else:
+                st.divider()
+                cols = ["Estado", "Dias restantes", "Etiqueta", "nomenclatura", "entidad", "objeto",
+                        "descripcion", "valor_referencial", "fecha_fin_inscripcion",
+                        "fecha_presentacion", "enlace"]
+                cols = [c for c in cols if c in f.columns]
+                tabla = f[cols].rename(columns={
+                    "nomenclatura": "Nomenclatura", "entidad": "Entidad", "objeto": "Objeto",
+                    "descripcion": "Descripcion", "valor_referencial": "Valor referencial",
+                    "fecha_fin_inscripcion": "Fin inscripcion", "fecha_presentacion": "Presentacion propuestas",
+                    "enlace": "Ver en SEACE",
+                }).sort_values("Dias restantes", na_position="last")
+                st.dataframe(
+                    tabla.style.apply(_colorea, axis=1),
+                    use_container_width=True, hide_index=True,
+                    column_config={"Ver en SEACE": st.column_config.LinkColumn("Ver en SEACE", display_text="Abrir portal")},
+                )
+                with st.expander("Resumen por etiqueta"):
+                    st.dataframe(f.groupby("Etiqueta").size().reset_index(name="Oportunidades"),
+                                 use_container_width=True, hide_index=True)
+                export_button(f, "vigentes_export.xlsx")
 
     with tab2:
         df = leer("licitaciones")

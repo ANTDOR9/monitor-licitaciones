@@ -72,9 +72,11 @@ def main():
     data = json.load(open(a.archivo, encoding="utf-8")) if a.archivo else descarga()
     if isinstance(data, dict):
         data = data.get("content") or data.get("data") or []
-    claves = [norm(k) for k in c["palabras_clave"]]
-    excluir = [norm(k) for k in c.get("palabras_excluir", [])]
-
+    # NOTA (cambio v2): ya NO se pre-filtra por palabra clave aqui. Se guarda
+    # TODO lo que trae la API -- el filtrado por etiquetas ahora vive 100% en
+    # el dashboard (igual que streamlit_app.py), asi el panel editable de
+    # etiquetas puede mostrar mas o menos resultados sin depender de una
+    # nueva extraccion.
     db = os.path.join(BASE, c["salida"]["base_datos"])
     os.makedirs(os.path.dirname(db), exist_ok=True)
     con = sqlite3.connect(db); tabla(con)
@@ -82,19 +84,17 @@ def main():
 
     filas, vistos = [], set()
     for o in data:
-        txt = norm(f"{o.get('detObjeto','')} {o.get('detItem','')} {o.get('sintesisProceso','')} {o.get('nomenclatura','')}")
-        if coincide(txt, claves, excluir):
-            idp = o.get("idProcedimiento")
-            if idp in vistos: continue
-            vistos.add(idp)
-            filas.append(fila(o))
+        idp = o.get("idProcedimiento")
+        if idp in vistos: continue
+        vistos.add(idp)
+        filas.append(fila(o))
     if filas:
         con.executemany("""INSERT OR REPLACE INTO vigentes VALUES
             (:id,:nomenclatura,:entidad,:objeto,:tipo_proceso,:descripcion,
              :valor_referencial,:moneda,:fecha_convocatoria,:fecha_fin_inscripcion,
              :fecha_presentacion,:ubigeo,:enlace)""", filas)
         con.commit()
-    print(f"Total vigentes: {len(data)} -> {len(filas)} relevantes para Brighter.")
+    print(f"Total vigentes: {len(data)} guardados (sin pre-filtrar; el dashboard filtra por etiquetas).")
     con.close()
 
 if __name__ == "__main__":
