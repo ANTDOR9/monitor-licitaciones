@@ -1,0 +1,46 @@
+# ============================================================
+#  Monitor de Licitaciones - Brighter Peru
+#  Configuracion editable SIN tocar codigo.
+#  Modifica las palabras clave y filtros aqui.
+# ============================================================
+
+# Fuente de datos OCDS (OECE - ex OSCE)
+fuente:
+  # URL de descarga por anio. {anio} se reemplaza automaticamente.
+  url_anual: "https://data.open-contracting.org/en/publication/135/download?name={anio}.jsonl.gz"
+  anios: [2025, 2026]   # anios a extraer para el historico (Fase 1)
+
+# Palabras clave: si el titulo/objeto/items contiene ALGUNA, el registro se incluye.
+# Todo en minusculas y sin tildes (el extractor normaliza antes de comparar).
+palabras_clave:
+  - "pantalla interactiva"
+  - "pantalla tactil"
+  - "monitor interactivo"
+  - "pizarra interactiva"
+  - "pizarra digital"
+  - "pizarra electronica"
+  - "panel interactivo"
+  - "kiosco"
+  - "kiosko"
+  - "totem"
+  - "senalizacion digital"
+  - "pantalla led"
+  - "pantalla digital"
+  - "videowall"
+  - "equipamiento audiovisual"
+  - "proyector interactivo"
+
+# Palabras que DESCARTAN un registro aunque tenga palabra clave (evita falsos positivos).
+palabras_excluir:
+  - "protector de pantalla"
+  - "mica de pantalla"
+  - "lamina protectora"
+
+# Filtros por defecto del dashboard (el usuario puede cambiarlos en pantalla).
+filtros:
+  monto_minimo: 0          # soles
+  departamentos: []        # vacio = todos
+
+salida:
+  base_datos: "data/licitaciones.db"
+  excel: "data/licitaciones_export.xlsx"
