@@ -99,6 +99,10 @@ def _colorea_perucompras(fila):
     c = _color_estado_entrega(fila.get("estado_entrega", ""))
     return [f"background-color: {c}" for _ in fila]
 
+def _colorea_perucompras_render(fila):
+    c = _color_estado_entrega(fila.get("Estado de entrega", ""))
+    return [f"background-color: {c}" for _ in fila]
+
 st.set_page_config(page_title="Monitor de Licitaciones - Brighter", layout="wide")
 
 if "vista" not in st.session_state:
@@ -107,10 +111,17 @@ if "vista" not in st.session_state:
 # ================================================================
 # VISTA: PERU COMPRAS
 # ================================================================
+PERUCOMPRAS_PORTAL = "https://catalogos.perucompras.gob.pe/ConsultaOrdenesPub/"
+
 def vista_perucompras():
-    st.title("Perú Compras — Catálogos Electrónicos")
-    st.caption("Compras DIRECTAS del Estado por Acuerdo Marco (canal distinto a SEACE). "
-               "Fuente: catalogos.perucompras.gob.pe")
+    st.title("🛒 Perú Compras — Compras ya ejecutadas por Catálogo")
+    st.caption(
+        "⚠️ Esto NO son oportunidades abiertas para postular (a diferencia de SEACE). "
+        "Son compras DIRECTAS que el Estado ya realizó por Acuerdo Marco: los proveedores "
+        "ya fueron seleccionados antes, así que aquí no hay plazos ni competencia por orden. "
+        "Úsalo como inteligencia de mercado: qué compra el Estado, a quién, y por cuánto. "
+        "Fuente: catalogos.perucompras.gob.pe"
+    )
 
     if st.button("⬅️ Volver a SEACE / OECE"):
         st.session_state.vista = "seace"
@@ -138,16 +149,25 @@ def vista_perucompras():
     c1, c2, c3 = st.columns(3)
     c1.metric("Órdenes encontradas", len(f))
     c2.metric("Monto total", f"S/ {f['monto_total'].fillna(0).sum():,.0f}")
-    c3.metric("Entidades", f["entidad"].nunique())
+    c3.metric("Entidades compradoras", f["entidad"].nunique())
 
-    cols_pc = ["categoria", "orden_compra", "proveedor", "entidad", "monto_total",
-               "estado_entrega", "fecha_aceptacion", "lugar_entrega"]
-    tabla_pc = f[cols_pc].sort_values("fecha_aceptacion", ascending=False)
+    tabla_pc = f.rename(columns={
+        "categoria": "Categoría (Acuerdo Marco)", "orden_compra": "N° Orden de Compra",
+        "proveedor": "Proveedor", "entidad": "Entidad compradora",
+        "monto_total": "Monto total (S/)", "estado_entrega": "Estado de entrega",
+        "fecha_aceptacion": "Fecha aceptación", "lugar_entrega": "Lugar de entrega",
+    })
+    cols_pc = ["Categoría (Acuerdo Marco)", "N° Orden de Compra", "Proveedor", "Entidad compradora",
+               "Monto total (S/)", "Estado de entrega", "Fecha aceptación", "Lugar de entrega"]
+    tabla_pc = tabla_pc[cols_pc].sort_values("Fecha aceptación", ascending=False)
     st.dataframe(
-        tabla_pc.style.apply(_colorea_perucompras, axis=1),
+        tabla_pc.style.apply(_colorea_perucompras_render, axis=1),
         use_container_width=True, hide_index=True,
     )
     st.caption("🟢 Aceptada/Entregada  🟡 Pendiente  🔴 Vencida/Rechazada/Anulada  ⬜ Sin dato")
+    st.info(f"🔎 Para ver el detalle de una orden: copia su **N° Orden de Compra** y búscalo en el "
+            f"[buscador público de Perú Compras]({PERUCOMPRAS_PORTAL}) "
+            f"(el sitio no permite enlazar directo a una orden especifica).")
     export_button(f, "perucompras_export.xlsx")
 
 # ================================================================
