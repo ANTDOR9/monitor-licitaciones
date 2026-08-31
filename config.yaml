@@ -44,3 +44,15 @@ filtros:
 salida:
   base_datos: "data/licitaciones.db"
   excel: "data/licitaciones_export.xlsx"
+
+# --- Fuente Peru Compras (Catalogos Electronicos / Acuerdos Marco) ---
+# Canal DISTINTO a SEACE: compras directas por catalogo. Se filtra por
+# Acuerdo Marco (categoria), no por palabra clave, porque esta fuente
+# no trae la descripcion del producto, solo datos de la orden.
+# Codigos sacados en vivo del <select> del formulario (agosto 2026).
+fuente_perucompras:
+  acuerdos_marco:
+    - codigo: "322-BIENES"
+      nombre: "EQUIPOS MULTIMEDIA Y ACCESORIOS"
+  fecha_inicio: "2024-01-01"
+  fecha_fin: "2026-12-31"
