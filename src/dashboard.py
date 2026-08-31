@@ -82,6 +82,23 @@ def etiqueta_de(texto, etiquetas, excluir):
             return et
     return None
 
+# ---- colores para la tabla de Peru Compras, segun Estado de Entrega ----
+def _color_estado_entrega(estado):
+    e = _norm(estado)
+    if not e or "sin dato" in e:
+        return "#F1EFE8"  # gris, sin info
+    if any(x in e for x in ("vencida", "rechazada", "anulada", "no entregada")):
+        return "#FCEBEB"  # rojo
+    if "pendiente" in e:
+        return "#FAEEDA"  # amarillo
+    if "aceptada" in e or "conforme" in e or "entregada" in e:
+        return "#E1F5EE"  # verde
+    return "#F1EFE8"
+
+def _colorea_perucompras(fila):
+    c = _color_estado_entrega(fila.get("estado_entrega", ""))
+    return [f"background-color: {c}" for _ in fila]
+
 st.set_page_config(page_title="Monitor de Licitaciones - Brighter", layout="wide")
 
 if "vista" not in st.session_state:
@@ -123,12 +140,14 @@ def vista_perucompras():
     c2.metric("Monto total", f"S/ {f['monto_total'].fillna(0).sum():,.0f}")
     c3.metric("Entidades", f["entidad"].nunique())
 
+    cols_pc = ["categoria", "orden_compra", "proveedor", "entidad", "monto_total",
+               "estado_entrega", "fecha_aceptacion", "lugar_entrega"]
+    tabla_pc = f[cols_pc].sort_values("fecha_aceptacion", ascending=False)
     st.dataframe(
-        f[["categoria", "orden_compra", "proveedor", "entidad", "monto_total",
-           "estado_entrega", "fecha_aceptacion", "lugar_entrega"]]
-          .sort_values("fecha_aceptacion", ascending=False),
+        tabla_pc.style.apply(_colorea_perucompras, axis=1),
         use_container_width=True, hide_index=True,
     )
+    st.caption("🟢 Aceptada/Entregada  🟡 Pendiente  🔴 Vencida/Rechazada/Anulada  ⬜ Sin dato")
     export_button(f, "perucompras_export.xlsx")
 
 # ================================================================
