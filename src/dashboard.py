@@ -307,9 +307,56 @@ def vista_petroperu():
     export_button(f, "petroperu_export.xlsx")
 
 # ================================================================
+# VISTA: BANCO DE LA NACION (bases de licitaciones/concursos)
+# ================================================================
+BNACION_PORTAL = "https://www.bn.com.pe/transparenciabn/publicacion-bases.asp"
+
+def vista_bnacion():
+    st.title("🏦 Banco de la Nación — Bases de Licitaciones y Concursos")
+    st.caption(
+        "⚠️ Igual que PetroPerú: régimen propio, no pasa por SEACE. Estas son "
+        "bases YA publicadas (procesos formales, no solo señal temprana). "
+        f"Fuente pública: {BNACION_PORTAL}"
+    )
+
+    df = leer("bnacion")
+    if df.empty:
+        st.warning("Sin datos del Banco de la Nación. Corre:  python src/bnacion.py")
+        return
+
+    st.sidebar.header("Filtros - Banco de la Nación")
+    txt = st.sidebar.text_input("Buscar en objeto", key="bn_txt")
+
+    f = df.copy()
+    if txt:
+        f = f[f["objeto"].str.lower().str.contains(txt.lower(), na=False)]
+
+    c1, c2 = st.columns(2)
+    c1.metric("Procesos relevantes", len(f))
+    c2.metric("Tipos distintos", f["tipo"].nunique())
+
+    tabla_bn = f.rename(columns={
+        "tipo": "Tipo de proceso", "numero": "N°", "anio": "Año", "fecha": "Fecha bases",
+        "objeto": "Objeto", "categoria": "Etiqueta", "enlace": "Documento",
+    })
+    cols_bn = ["Tipo de proceso", "N°", "Año", "Fecha bases", "Objeto", "Etiqueta", "Documento"]
+    cols_bn = [c for c in cols_bn if c in tabla_bn.columns]
+    st.dataframe(
+        tabla_bn[cols_bn].sort_values("Fecha bases", ascending=False),
+        use_container_width=True, hide_index=True,
+        column_config={"Documento": st.column_config.LinkColumn("Documento", display_text="Ver bases (PDF)")},
+    )
+    export_button(f, "bnacion_export.xlsx")
+
+# ================================================================
 # ROUTER -- selector de fuente (se repite arriba en cada vista)
 # ================================================================
-FUENTES = {"seace": "📡 SEACE / OECE", "perucompras": "🛒 Perú Compras", "petroperu": "🛢️ PetroPerú"}
+FUENTES = {
+    "seace": "📡 SEACE / OECE",
+    "perucompras": "🛒 Perú Compras",
+    "petroperu": "🛢️ PetroPerú",
+    "bnacion": "🏦 Banco de la Nación",
+}
 
 def selector_fuente():
     cols = st.columns(len(FUENTES))
@@ -326,5 +373,7 @@ if st.session_state.vista == "perucompras":
     vista_perucompras()
 elif st.session_state.vista == "petroperu":
     vista_petroperu()
+elif st.session_state.vista == "bnacion":
+    vista_bnacion()
 else:
     vista_seace()
