@@ -78,3 +78,130 @@ PENDIENTE:
 entidad, departamento, objeto, marca/modelo, cantidad, monto_referencial,
 monto_adjudicado, precio_unitario, proveedor_ganador, fecha, enlace.
 (marca/modelo aun no extraido — ver pendientes.)
+
+## 7. Perú Compras (Catálogos Electrónicos / Acuerdos Marco) — RESUELTO (sesión ago-2026)
+
+El mecanismo documentado originalmente (descarga masiva por Anio/Mes vía
+`getListaDescargaMasiva` + Azure Blob) **ya NO funciona** (devuelve 500). El
+sitio fue rediseñado. Investigado en vivo y reemplazado por completo.
+
+### Endpoint real descubierto
+```
+POST https://catalogos.perucompras.gob.pe/ConsultaOrdenesPub/consultaOrdenes
+Content-Type: text/plain;charset=UTF-8
+```
+Requiere sesión previa (GET a `/ConsultaOrdenesPub/` para cookies:
+`ASP.NET_SessionId`, `ARRAffinity`, `__RequestVerificationToken`).
+
+**Body** (campos separados por `^`, NO es JSON ni form-urlencoded):
+```
+^{codigo_acuerdo_marco}^^^^{fecha_inicio}^{fecha_fin}^{tipo}
+```
+- `codigo_acuerdo_marco`: el numero solo (ej. `322`), SIN el sufijo `-BIENES`
+  que trae el `<select>` del formulario — ese sufijo va aparte en `tipo`.
+  (Bug real que nos costó tiempo: mandar `"322-BIENES"` completo como código
+  da 0 resultados silenciosamente, sin error.)
+- `tipo`: `BIENES` (no probado `SERVICIOS` con datos reales).
+- fechas en formato `YYYY-MM-DD`.
+
+**Respuesta**: texto plano, NO JSON:
+```
+[encabezados]¬[meta1]¬[meta2]¬[meta3]¬[meta4]¯[fila1]¬[fila2]¬...
+```
+- `¯` separa el bloque de encabezados del bloque de datos.
+- Dentro del bloque de datos, cada orden va separada por `¬`.
+- Dentro de cada orden, los 21 campos van separados por `^`, mismo orden que
+  el encabezado (Nro, Ruc Proveedor, Proveedor, Ruc Entidad, Entidad, Orden
+  Entidad, Tipo de Contratación, Tipo de Entrega, Procedimiento, Orden de
+  Compra/Servicio, Fecha de Aceptación, Monto Total de la Orden, Número de
+  Entrega, Estado de Entrega, Lugar de entrega, Fecha inicio entrega, Plazo
+  de entrega Máximo, Sub Total, IGV, Monto Total, Cesión de derechos).
+
+Parser implementado en `src/perucompras.py` (`parsear()`).
+
+### Limitación importante: SIN descripción de producto
+Esta fuente (ni el endpoint `consultaOrdenes` ni la exportación `.csv`, que
+sí funciona a diferencia de `.Json (OCDS)` que está roto con error 500) trae
+la descripción del ítem/producto — solo datos de la orden (proveedor,
+entidad, montos, fechas, estado). La descripción real solo existe dentro del
+PDF de la orden física (columna "Orden Digitalizada" en el CSV), no en datos
+estructurados.
+**Por eso el filtrado NO es por palabra clave aquí** (a diferencia de SEACE):
+se filtra eligiendo directamente qué **Acuerdos Marco** (categorías) son
+relevantes, configurado en `config.yaml` → `fuente_perucompras.acuerdos_marco`.
+
+### Códigos de Acuerdo Marco vigentes relevantes (ago-2026)
+De 16 Acuerdos Marco vigentes en total, solo uno aplica a Brighter:
+```
+322-BIENES :: EXT-CE-2024-2 EQUIPOS MULTIMEDIA Y ACCESORIOS
+```
+(Los otros 15 son llantas, útiles de oficina, limpieza, aire acondicionado,
+bebidas, cereales, etc. — nada de audiovisual/pantallas/kioscos.) Si Perú
+Compras publica un Acuerdo Marco nuevo relevante, se agrega ahí sin tocar
+código — mismo patrón que `palabras_clave` en SEACE.
+
+### Concepto clave: Perú Compras NO es "oportunidades abiertas"
+A diferencia de SEACE, un Acuerdo Marco es un catálogo **pre-competido**: los
+proveedores ya fueron seleccionados en una convocatoria previa (rara, no
+diaria); una vez dentro, cualquier entidad les compra DIRECTO, sin licitación
+por orden. Por eso la tabla de `perucompras` es **inteligencia de mercado**
+(qué/quién/cuánto compra el Estado), NO una lista de plazos para postular.
+El dashboard deja esto explícito con un aviso (`⚠️`) en la vista.
+
+### Estado actual
+- `src/perucompras.py`: extractor funcional. Guarda en tabla `perucompras`.
+  Probado con 1378+ órdenes reales del Acuerdo Marco 322.
+- `src/dashboard.py`: pestaña "🛒 Perú Compras" navegable por botón (no tab),
+  con botón de regreso a SEACE. Tabla coloreada por Estado de Entrega
+  (verde=Aceptada/Entregada, amarillo=Pendiente, rojo=Vencida/Rechazada/
+  Anulada), columnas en español, nota con link al buscador público (no se
+  puede enlazar directo a una orden — el sitio arma la búsqueda con JS).
+
+### PENDIENTE (identificado, NO resuelto)
+"Convocatoria para incorporación de nuevos proveedores" — esto SÍ sería una
+oportunidad real para Brighter (competir para entrar al catálogo de un
+Acuerdo Marco). Vive en `www.perucompras.gob.pe` (sitio institucional,
+DISTINTO del buscador `catalogos.perucompras.gob.pe` que ya integramos). El
+enlace encontrado por búsqueda (`/acuerdos-marco/convocatoria-para-la-
+incorporacion-de-nuevos-proveedores.php`) devolvió 404 al verificarlo — la
+página fue movida o renombrada. Falta ubicar la URL/sección correcta antes
+de poder programar un extractor. Cadencia baja (no diaria, capaz 1-2 veces
+al año, a veces cubre varios rubros a la vez) — no requiere corrida diaria
+como SEACE.
+
+## 8. Roadmap / Prioridades (definido ago-2026, sesión pausada aquí)
+
+Orden acordado con Anthony:
+
+1. **SEACE** — HECHO. Vigentes (en vivo, API pública) + Histórico (OCDS
+   OECE). Panel de etiquetas editable, coloreado por estado.
+2. **Perú Compras / Acuerdo Marco** — el hueco más grande identificado.
+   - 2a. Órdenes ya ejecutadas (inteligencia de mercado) — HECHO, ver
+     sección 7.
+   - 2b. Convocatorias para nuevos proveedores (oportunidad real de venta,
+     no solo mercado) — PENDIENTE, ver sección 7. Cuando se resuelva, va
+     como tabla PRINCIPAL de la pestaña Perú Compras (con plazos/colores
+     tipo Vigentes), y la tabla de órdenes ejecutadas baja a una sección
+     "Historial" (expander) debajo.
+3. **Monitoreo de webs institucionales** (capa adicional, más cara de
+   mantener): sondeos de mercado / estudios de posibilidades que a veces se
+   publican en la web de la entidad ANTES de llegar a SEACE — daría ventaja
+   de tiempo. Candidatos mencionados: PetroPerú, EsSalud, gobiernos
+   regionales, universidades nacionales grandes. Recomendación: NO
+   construir scraper por cada entidad grande de una — empezar con 2-3
+   entidades piloto (elegir cuáles compran más seguido productos del rubro
+   Brighter) antes de escalar, porque no hay API unificada como SEACE/OCDS
+   y cada sitio institucional tiene su propia estructura.
+
+### Otros pendientes menores (no bloqueantes)
+- Enlaces rotos en la versión ya deployada de Anthony (mencionado de pasada,
+  no resuelto esta sesión).
+- Deploy a Streamlit Community Cloud desde
+  https://github.com/ANTDOR9/monitor-licitaciones (conectar repo en
+  share.streamlit.io -> auto-redeploy en cada push). Pendiente resolver que
+  `data/licitaciones.db` no vive en git (dashboard depende de correr los
+  extractores localmente primero) -- ver opciones planteadas en sesión:
+  (1) que Vigentes consulte la API en vivo igual que la version de
+  referencia, dejando Historico/Perú Compras con snapshot subido a mano, o
+  (2) GitHub Action programado que corra los extractores y comitee la base
+  automaticamente.
