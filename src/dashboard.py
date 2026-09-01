@@ -32,6 +32,25 @@ def leer(tabla):
             df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
+def selector_todos(key, etiqueta_singular="registros"):
+    """Botones vistosos tipo 'segmented control' para alternar entre
+    'Solo relevantes' y 'Ver todos'. Reemplaza el checkbox simple."""
+    if key not in st.session_state:
+        st.session_state[key] = False
+    c1, c2 = st.columns(2)
+    if c1.button("🏷️ Solo relevantes", key=f"{key}_rel",
+                 type="secondary" if st.session_state[key] else "primary",
+                 use_container_width=True):
+        st.session_state[key] = False
+        st.rerun()
+    if c2.button(f"👁️ Ver TODOS los {etiqueta_singular}", key=f"{key}_todos_btn",
+                 type="primary" if st.session_state[key] else "secondary",
+                 use_container_width=True):
+        st.session_state[key] = True
+        st.rerun()
+    return st.session_state[key]
+
+
 def export_button(df, nombre):
     if df.empty:
         return
@@ -283,11 +302,8 @@ def vista_petroperu():
         st.warning("Sin datos de PetroPerú. Corre:  python src/petroperu.py")
         return
 
+    ver_todos = selector_todos("pp_todos", "avisos")
     st.sidebar.header("Filtros - PetroPerú")
-    ver_todos = st.sidebar.checkbox(
-        "👁️ Ver TODOS los avisos (sin filtrar por etiqueta)", key="pp_todos",
-        help="Util para revisar a mano si algun aviso relevante tiene un error de tipeo "
-             "que el filtro automatico de palabras clave no detecto.")
     txt = st.sidebar.text_input("Buscar en descripción", key="pp_txt")
 
     f = df if ver_todos else df[df["categoria"] != ""]
@@ -332,11 +348,8 @@ def vista_bnacion():
         st.warning("Sin datos del Banco de la Nación. Corre:  python src/bnacion.py")
         return
 
+    ver_todos = selector_todos("bn_todos", "procesos")
     st.sidebar.header("Filtros - Banco de la Nación")
-    ver_todos = st.sidebar.checkbox(
-        "👁️ Ver TODOS los procesos (sin filtrar por etiqueta)", key="bn_todos",
-        help="Util para revisar a mano si algun proceso relevante tiene un error de tipeo "
-             "que el filtro automatico de palabras clave no detecto.")
     txt = st.sidebar.text_input("Buscar en objeto", key="bn_txt")
 
     f = df if ver_todos else df[df["categoria"] != ""]
