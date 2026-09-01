@@ -50,19 +50,47 @@ def descargar_anio(url_tpl, anio, destino):
             f.write(chunk)
     return destino
 
-def texto_busqueda(release):
-    """Junta titulo, descripcion y descripciones de items para buscar keywords."""
-    partes = []
+def textos_candidatos(release):
+    """Devuelve una LISTA de textos candidatos por separado (no un solo bloque
+    pegado), para que el matcher revise cada uno de forma independiente.
+
+    BUG REAL encontrado con datos reales (ago-2026): un proceso puede traer
+    decenas de items sin relacion entre si (ej. una compra de 54 insumos
+    medicos). Si se pega todo el texto en un solo bloque y se busca "todas
+    las palabras de la clave en algun lugar del texto", dos items DISTINTOS
+    y sin relacion pueden combinarse: uno que menciona "...para monitor" y
+    otro que dice "aposito INTERACTIVO en forma de gel" -- ninguno tiene que
+    ver con Brighter, pero juntos calzan la clave "monitor interactivo".
+    Por eso ahora se revisa CADA texto (titulo+descripcion general, y cada
+    item por separado) de forma AISLADA -- una clave debe calzar dentro de
+    un mismo texto, no repartida entre items distintos.
+    """
     tender = release.get("tender") or {}
-    partes.append(tender.get("title", ""))
-    partes.append(tender.get("description", ""))
+    candidatos = []
+
+    general = " ".join(p for p in (tender.get("title", ""), tender.get("description", "")) if p)
+    if general.strip():
+        candidatos.append(normaliza(general))
+
     for it in (tender.get("items") or []):
-        partes.append(it.get("description", ""))
+        d = it.get("description", "")
+        if d:
+            candidatos.append(normaliza(d))
+
     for aw in (release.get("awards") or []):
-        partes.append(aw.get("title", ""))
+        t = aw.get("title", "")
+        if t:
+            candidatos.append(normaliza(t))
         for it in (aw.get("items") or []):
-            partes.append(it.get("description", ""))
-    return normaliza(" | ".join(p for p in partes if p))
+            d = it.get("description", "")
+            if d:
+                candidatos.append(normaliza(d))
+
+    return candidatos
+
+def coincide_alguno(candidatos, claves, excluir):
+    """True si ALGUNO de los textos candidatos (ya aislados) calza una clave."""
+    return any(coincide(c, claves, excluir) for c in candidatos)
 
 def coincide(texto_norm, claves, excluir):
     if any(x in texto_norm for x in excluir):
@@ -232,7 +260,7 @@ def procesa_fuente(ruta, cfg, con):
         ocid = rel.get("ocid")
         if not ocid or ocid in vistos:      # dedup por proceso
             continue
-        if coincide(texto_busqueda(rel), claves, excluir):
+        if coincide_alguno(textos_candidatos(rel), claves, excluir):
             vistos.add(ocid)
             guardados.append(extrae_registro(rel))
     if guardados:
