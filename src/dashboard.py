@@ -283,11 +283,18 @@ def vista_petroperu():
         return
 
     st.sidebar.header("Filtros - PetroPerú")
+    ver_todos = st.sidebar.checkbox(
+        "👁️ Ver TODOS los avisos (sin filtrar por etiqueta)", key="pp_todos",
+        help="Util para revisar a mano si algun aviso relevante tiene un error de tipeo "
+             "que el filtro automatico de palabras clave no detecto.")
     txt = st.sidebar.text_input("Buscar en descripción", key="pp_txt")
 
-    f = df.copy()
+    f = df if ver_todos else df[df["categoria"] != ""]
+    f = f.copy()
     if txt:
         f = f[f["descripcion"].str.lower().str.contains(txt.lower(), na=False)]
+    if ver_todos:
+        st.caption(f"👁️ Mostrando los {len(df)} avisos totales (sin filtrar por etiqueta).")
 
     c1, c2 = st.columns(2)
     c1.metric("Avisos relevantes", len(f))
@@ -325,11 +332,18 @@ def vista_bnacion():
         return
 
     st.sidebar.header("Filtros - Banco de la Nación")
+    ver_todos = st.sidebar.checkbox(
+        "👁️ Ver TODOS los procesos (sin filtrar por etiqueta)", key="bn_todos",
+        help="Util para revisar a mano si algun proceso relevante tiene un error de tipeo "
+             "que el filtro automatico de palabras clave no detecto.")
     txt = st.sidebar.text_input("Buscar en objeto", key="bn_txt")
 
-    f = df.copy()
+    f = df if ver_todos else df[df["categoria"] != ""]
+    f = f.copy()
     if txt:
         f = f[f["objeto"].str.lower().str.contains(txt.lower(), na=False)]
+    if ver_todos:
+        st.caption(f"👁️ Mostrando los {len(df)} procesos totales (sin filtrar por etiqueta).")
 
     c1, c2 = st.columns(2)
     c1.metric("Procesos relevantes", len(f))

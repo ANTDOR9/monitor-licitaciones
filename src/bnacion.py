@@ -122,25 +122,29 @@ def main():
             print(p)
         return
 
-    procesos = parsear(html)
-    relevantes = []
+    # NOTA (igual que petroperu.py/vigentes.py): se guarda TODO, no solo lo
+    # que calza con las palabras clave -- asi el dashboard puede mostrar
+    # "ver todos" para revisar a mano por si algun objeto tiene un error de
+    # tipeo que el filtro automatico no capta.
+    con_etiqueta = 0
     for p in procesos:
         cat = coincide(norm(p["objeto"]), claves, excluir)
+        p["categoria"] = cat or ""
         if cat:
-            relevantes.append({**p, "categoria": cat})
+            con_etiqueta += 1
 
     db = os.path.join(BASE, c["salida"]["base_datos"])
     os.makedirs(os.path.dirname(db), exist_ok=True)
     con = sqlite3.connect(db)
     tabla(con)
     con.execute("DELETE FROM bnacion")
-    if relevantes:
+    if procesos:
         con.executemany(
             "INSERT OR REPLACE INTO bnacion (clave,tipo,numero,anio,fecha,objeto,categoria,enlace) "
-            "VALUES (:clave,:tipo,:numero,:anio,:fecha,:objeto,:categoria,:enlace)", relevantes)
+            "VALUES (:clave,:tipo,:numero,:anio,:fecha,:objeto,:categoria,:enlace)", procesos)
         con.commit()
     con.close()
-    print(f"Listo. {len(procesos)} procesos revisados -> {len(relevantes)} relevantes para Brighter.")
+    print(f"Listo. {len(procesos)} procesos guardados (todos) -> {con_etiqueta} con etiqueta relevante para Brighter.")
 
 
 if __name__ == "__main__":
