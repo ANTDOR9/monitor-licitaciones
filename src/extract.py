@@ -137,6 +137,19 @@ def detecta_marca(texto_norm):
             return marca.upper()
     return ""
 
+from urllib.parse import quote
+
+def enlace_busqueda_oece(nomenclatura, fecha_iso):
+    anio = (fecha_iso or "")[:4]
+    texto = (nomenclatura or "").strip()[:80]
+    if not texto:
+        return "https://contratacionesabiertas.oece.gob.pe/"
+    qs = f"search={quote(texto)}"
+    if anio:
+        qs += f"&year={anio}"
+    return f"https://contratacionesabiertas.oece.gob.pe/busqueda?{qs}"
+
+
 def extrae_registro(release):
     """Aplana un compiled release OCDS a una fila util para Brighter."""
     tender = release.get("tender") or {}
@@ -194,7 +207,11 @@ def extrae_registro(release):
         "proveedor_ganador": proveedor,
         "marca_detectada": marca_detectada,
         "estado": (tender.get("status") or ""),
-        "enlace": f"https://contratacionesabiertas.oece.gob.pe/datosabiertos/ocds/{release.get('ocid','')}",
+        # No hay pagina de detalle directa por OCID confirmada -- se arma un
+        # link de BUSQUEDA en el portal humano (contratacionesabiertas.oece.gob.pe)
+        # usando la nomenclatura y el año, que deja al usuario muy cerca del
+        # proceso exacto (mucho mejor que la API JSON cruda de antes).
+        "enlace": enlace_busqueda_oece(nomenclatura, release.get("date") or ""),
     }
 
 def crea_tabla(con):

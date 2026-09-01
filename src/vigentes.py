@@ -55,7 +55,7 @@ def fila(o):
         "fecha_fin_inscripcion": o.get("fechaFin", ""),
         "fecha_presentacion": o.get("fechaPresentacionPropuestas", ""),
         "ubigeo": o.get("ubigeo"),
-        "enlace": "https://prod4.seace.gob.pe/openegocio/#/buscar",
+        "enlace": f"https://prod4.seace.gob.pe/openegocio/#/ficha/idProceso/{o.get('idProcedimiento')}",
     }
 
 def tabla(con):

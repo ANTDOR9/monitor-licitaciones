@@ -255,7 +255,8 @@ def vista_seace():
             st.dataframe(
                 df.sort_values("fecha", ascending=False),
                 use_container_width=True, hide_index=True,
-                column_config={"enlace": st.column_config.LinkColumn("enlace")},
+                column_config={"enlace": st.column_config.LinkColumn(
+                    "Buscar en OECE", display_text="Buscar proceso")},
             )
             c1, c2 = st.columns(2)
             c1.metric("Licitaciones", len(df))
