@@ -1,10 +1,13 @@
 # Datos regenerables (se generan corriendo los extractores) -- NO subir a git.
 data/*.jsonl.gz
-data/*.db
 data/*.csv
 data/*.xlsx
 data/perucompras_raw_test.txt
 !data/.gitkeep
+
+# data/licitaciones.db SI se sube: es la base ya filtrada y liviana (~2MB)
+# que usa el dashboard en Streamlit Cloud para tener datos sin correr nada
+# en la nube. Los .jsonl.gz crudos (100MB+) siguen fuera del repo.
 
 # Entornos virtuales / cache de Python
 .venv/
