@@ -184,14 +184,42 @@ Orden acordado con Anthony:
      tipo Vigentes), y la tabla de órdenes ejecutadas baja a una sección
      "Historial" (expander) debajo.
 3. **Monitoreo de webs institucionales** (capa adicional, más cara de
-   mantener): sondeos de mercado / estudios de posibilidades que a veces se
-   publican en la web de la entidad ANTES de llegar a SEACE — daría ventaja
-   de tiempo. Candidatos mencionados: PetroPerú, EsSalud, gobiernos
-   regionales, universidades nacionales grandes. Recomendación: NO
-   construir scraper por cada entidad grande de una — empezar con 2-3
-   entidades piloto (elegir cuáles compran más seguido productos del rubro
-   Brighter) antes de escalar, porque no hay API unificada como SEACE/OCDS
-   y cada sitio institucional tiene su propia estructura.
+   mantener): sondeos de mercado / avisos que a veces se publican en la web
+   de la entidad ANTES de llegar a SEACE — da ventaja de tiempo. Esta fase
+   ya se ejecutó parcialmente:
+   - **PetroPerú** — HECHO. `src/petroperu.py` scrapea "Avisos de
+     Contratación Futura" (HTML publico paginado, sin login, ~35 paginas).
+     Empresa con régimen propio, no pasa por SEACE.
+   - **Banco de la Nación** — HECHO. `src/bnacion.py` scrapea la sección
+     "Publicación de Bases" (bases de licitaciones/concursos/subastas,
+     HTML público sin login, sin API). También régimen propio.
+   - **EsSalud** — DESCARTADO. Su web solo publica convocatorias de
+     personal (CAS/empleo), no de compras de bienes/servicios; como
+     entidad pública normal, sus compras de bienes ya pasan por SEACE
+     (cubierto sin scraper aparte).
+   - **SEDAPAL** — DESCARTADO por ahora. Las URLs de su sección de
+     proveedores (`/oportunidades-para-proveedores`,
+     `/paginas/convocatorias-vigentes`) devuelven 404 -- pagina caida o
+     movida. Retomar si en el futuro se encuentra la URL vigente.
+   - **ENAPU** — DESCARTADO por ahora. Tiene seccion publica
+     (`sistema-transparencia`) pero es un CMS generico de carpetas
+     anidadas (categoria -> año -> PDF) sin objeto de contratacion visible
+     fuera del PDF -- demasiado fragil para automatizar con confianza,
+     y entidad chica comparada con PetroPerú/Banco de la Nación.
+   - **CORPAC** — DESCARTADO por ahora. Su portal real
+     (`portal2.corpac.gob.pe`) tiene certificado SSL invalido/roto que
+     impide siquiera cargarlo; la pagina institucional en gob.pe no trae
+     enlaces claros a licitaciones.
+   - Universidades nacionales y gobiernos regionales — cubiertos vía SEACE
+     (régimen normal), no necesitan scraper aparte.
+
+   Dashboard: el selector de fuentes ahora tiene 4 botones (SEACE / Perú
+   Compras / PetroPerú / Banco de la Nación), estilo consistente. Tanto
+   `petroperu.py` como `bnacion.py` guardan TODOS los registros (no solo
+   los que calzan con las palabras clave), y el dashboard tiene un checkbox
+   "Ver TODOS (sin filtrar)" en cada vista para revisar a mano por si algún
+   objeto tiene un error de tipeo que el matcher automático no detecta
+   (mismo principio que ya se aplicó en Vigentes/SEACE).
 
 ### Otros pendientes menores (no bloqueantes)
 - Enlaces rotos en la versión ya deployada de Anthony (mencionado de pasada,

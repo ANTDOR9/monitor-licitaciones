@@ -1,0 +1,51 @@
+name: Actualizar datos (diario)
+
+# Corre las fuentes livianas/en vivo y comitea la base actualizada, para que
+# Streamlit Cloud siempre tenga datos frescos sin que alguien tenga que
+# correr los extractores a mano. NO incluye extract.py (historico OCDS,
+# ~250MB de descarga) -- eso vive en el workflow semanal aparte.
+
+on:
+  schedule:
+    - cron: "0 10 * * *"   # 10:00 UTC = 05:00 hora Peru, todos los dias
+  workflow_dispatch: {}     # permite correrlo manualmente desde la pestaña Actions
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: SEACE - Vigentes
+        run: python src/vigentes.py
+        continue-on-error: true
+
+      - name: Perú Compras
+        run: python src/perucompras.py
+        continue-on-error: true
+
+      - name: PetroPerú
+        run: python src/petroperu.py
+        continue-on-error: true
+
+      - name: Banco de la Nación
+        run: python src/bnacion.py
+        continue-on-error: true
+
+      - name: Commit y push si hay cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/licitaciones.db
+          git diff --cached --quiet && echo "Sin cambios en la base." || git commit -m "actualizacion automatica de datos (diario)"
+          git push
