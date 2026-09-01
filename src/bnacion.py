@@ -123,6 +123,8 @@ def main():
             print(p)
         return
 
+    procesos = parsear(html)
+
     # NOTA (igual que petroperu.py/vigentes.py): se guarda TODO, no solo lo
     # que calza con las palabras clave -- asi el dashboard puede mostrar
     # "ver todos" para revisar a mano por si algun objeto tiene un error de
