@@ -30,8 +30,8 @@ URL = DOMINIO + "/transparenciabn/publicacion-bases.asp"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 RE_PROCESO = re.compile(
-    r"(licitaci[oó]n p[uú]blica|concurso p[uú]blico(?:\s+abreviado)?|"
-    r"concurso de m[eé]ritos|subasta)\s*n?[º°]?\s*(\d+)\s*-\s*(\d{4})",
+    r"(licitaci[oó]n\s+p[uú]blica|concurso\s+p[uú]blico(?:\s+de\s+\w+)?(?:\s+abreviado)?|"
+    r"concurso\s+de\s+m[eé]ritos|subasta)[^0-9]{0,25}?n?[º°]?\s*(\d+)\s*-\s*(\d{4})",
     re.I)
 RE_FECHA_ARCHIVO = re.compile(r"(\d{2})(\d{2})(\d{4})\.pdf", re.I)
 
@@ -61,6 +61,7 @@ def descarga():
     import requests
     r = requests.get(URL, headers=HEADERS, timeout=30)
     r.raise_for_status()
+    r.encoding = r.apparent_encoding or "utf-8"  # el server no siempre declara bien el charset
     return r.text
 
 
@@ -77,7 +78,7 @@ def parsear(html):
         if cont:
             a = cont.find("a", href=re.compile(r"\.pdf$", re.I))
             if a and a.get("href"):
-                enlace = urljoin(DOMINIO, a["href"])
+                enlace = urljoin(URL, a["href"])
                 texto_link = a.get_text(" ", strip=True)
                 m = RE_PROCESO.search(texto_link) or RE_PROCESO.search(titulo)
                 if m:
