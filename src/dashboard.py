@@ -2,10 +2,11 @@
 Dashboard de Licitaciones - Brighter Peru
 Ejecutar:  streamlit run src/dashboard.py
 
-Dos "paginas" separadas por botones (no por tabs, para que sean fuentes
-claramente distintas con su propia metodologia):
-  - SEACE / OECE  -> Vigentes + Historico (como antes)
+Tres "paginas" separadas por un selector de fuente (no por tabs, para que
+sean fuentes claramente distintas con su propia metodologia):
+  - SEACE / OECE  -> Vigentes + Historico
   - Peru Compras  -> Ordenes por Acuerdo Marco (Catalogos Electronicos)
+  - PetroPeru     -> Avisos de Contratacion Futura (senal temprana)
 """
 import os, sqlite3
 import pandas as pd
@@ -124,10 +125,6 @@ def vista_perucompras():
         "Fuente: catalogos.perucompras.gob.pe"
     )
 
-    if st.button("⬅️ Volver a SEACE / OECE"):
-        st.session_state.vista = "seace"
-        st.rerun()
-
     df = leer("perucompras")
     if df.empty:
         st.warning("Sin datos de Perú Compras. Corre:  python src/perucompras.py")
@@ -177,10 +174,6 @@ def vista_perucompras():
 def vista_seace():
     st.title("📡 Tracker de Licitaciones — Brighter Perú")
     st.caption("Pantallas interactivas, pizarras digitales, kioscos y equipamiento audiovisual. Fuente: OECE / SEACE.")
-
-    if st.button("📦 Ver Perú Compras (Catálogos Electrónicos)"):
-        st.session_state.vista = "perucompras"
-        st.rerun()
 
     tab1, tab2 = st.tabs(["Oportunidades VIGENTES (postular ahora)", "Historico de adjudicaciones"])
 
@@ -270,9 +263,68 @@ def vista_seace():
             export_button(df, "historico_export.xlsx")
 
 # ================================================================
-# ROUTER
+# VISTA: PETROPERU (avisos de contratacion futura -- señal temprana)
 # ================================================================
+PETROPERU_PORTAL = "https://convocatorias.petroperu.com.pe/avisos-de-contratacion-futura"
+
+def vista_petroperu():
+    st.title("🛢️ PetroPerú — Avisos de Contratación Futura")
+    st.caption(
+        "⚠️ Estos son avisos TEMPRANOS, antes de que exista un proceso formal "
+        "(no pasan por SEACE, PetroPerú tiene régimen propio de contratación). "
+        "Sirven para anticiparse: cuando un aviso madura, PetroPerú suele abrir "
+        "el proceso en su propio portal de proveedores (acceso restringido). "
+        f"Fuente pública: {PETROPERU_PORTAL}"
+    )
+
+    df = leer("petroperu")
+    if df.empty:
+        st.warning("Sin datos de PetroPerú. Corre:  python src/petroperu.py")
+        return
+
+    st.sidebar.header("Filtros - PetroPerú")
+    txt = st.sidebar.text_input("Buscar en descripción", key="pp_txt")
+
+    f = df.copy()
+    if txt:
+        f = f[f["descripcion"].str.lower().str.contains(txt.lower(), na=False)]
+
+    c1, c2 = st.columns(2)
+    c1.metric("Avisos relevantes", len(f))
+    c2.metric("Categorías distintas", f["categoria"].nunique())
+
+    tabla_pp = f.rename(columns={
+        "codigo": "Código de proceso", "numero": "N° Aviso", "fecha": "Fecha publicación",
+        "descripcion": "Descripción", "categoria": "Etiqueta", "pdf": "Documento",
+    })
+    cols_pp = ["Código de proceso", "N° Aviso", "Fecha publicación", "Descripción", "Etiqueta", "Documento"]
+    cols_pp = [c for c in cols_pp if c in tabla_pp.columns]
+    st.dataframe(
+        tabla_pp[cols_pp].sort_values("Fecha publicación", ascending=False),
+        use_container_width=True, hide_index=True,
+        column_config={"Documento": st.column_config.LinkColumn("Documento", display_text="Ver PDF")},
+    )
+    export_button(f, "petroperu_export.xlsx")
+
+# ================================================================
+# ROUTER -- selector de fuente (se repite arriba en cada vista)
+# ================================================================
+FUENTES = {"seace": "📡 SEACE / OECE", "perucompras": "🛒 Perú Compras", "petroperu": "🛢️ PetroPerú"}
+
+def selector_fuente():
+    cols = st.columns(len(FUENTES))
+    for col, (clave, etiqueta) in zip(cols, FUENTES.items()):
+        activo = st.session_state.vista == clave
+        if col.button(etiqueta, key=f"sel_{clave}", type="primary" if activo else "secondary",
+                       use_container_width=True):
+            st.session_state.vista = clave
+            st.rerun()
+    st.divider()
+
+selector_fuente()
 if st.session_state.vista == "perucompras":
     vista_perucompras()
+elif st.session_state.vista == "petroperu":
+    vista_petroperu()
 else:
     vista_seace()

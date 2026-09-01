@@ -77,3 +77,7 @@ fuente_perucompras:
       nombre: "EQUIPOS MULTIMEDIA Y ACCESORIOS"
   fecha_inicio: "2024-01-01"
   fecha_fin: "2026-12-31"
+
+fuente_petroperu:
+  url: "https://convocatorias.petroperu.com.pe/avisos-de-contratacion-futura"
+  paginas_max: 40  # tope de seguridad; se detiene antes si ya no hay filas nuevas
