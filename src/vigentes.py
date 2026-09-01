@@ -10,7 +10,7 @@ Uso:
     python src/vigentes.py                 # descarga en vivo
     python src/vigentes.py --archivo x.json  # usa un JSON local (pruebas)
 """
-import argparse, json, os, sqlite3, unicodedata
+import argparse, json, os, re, sqlite3, unicodedata
 import yaml
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,10 +26,12 @@ def norm(t):
     return "".join(c for c in t if not unicodedata.combining(c)).lower()
 
 def coincide(texto, claves, excluir):
+    # palabra completa (\b), no subcadena -- evita que "monitor" pesque
+    # "monitoreo" (ver detalle del bug en extract.py::coincide).
     if any(x in texto for x in excluir): return False
     for clave in claves:
         toks = [t for t in clave.split() if len(t) >= 4]
-        if toks and all(t in texto for t in toks): return True
+        if toks and all(re.search(rf"\b{re.escape(t)}(?:es|s)?\b", texto) for t in toks): return True
     return False
 
 def descarga():

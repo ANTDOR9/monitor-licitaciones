@@ -1,0 +1,13 @@
+# Datos regenerables (se generan corriendo los extractores) -- NO subir a git.
+data/*.jsonl.gz
+data/*.db
+data/*.csv
+data/*.xlsx
+data/perucompras_raw_test.txt
+!data/.gitkeep
+
+# Entornos virtuales / cache de Python
+.venv/
+venv/
+__pycache__/
+*.pyc

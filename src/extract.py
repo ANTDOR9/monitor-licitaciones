@@ -67,12 +67,18 @@ def texto_busqueda(release):
 def coincide(texto_norm, claves, excluir):
     if any(x in texto_norm for x in excluir):
         return False
-    # Una clave calza si TODAS sus palabras (>=4 letras) aparecen en el texto.
-    # Comparar por palabra (no la frase completa) tolera plurales:
-    # "pantalla interactiva" calza en "pantallas interactivas".
+    # Una clave calza si TODAS sus palabras (>=4 letras) aparecen en el texto,
+    # COMO PALABRA COMPLETA (\b...\b), no como subcadena.
+    # BUG REAL encontrado con datos reales (ago-2026): sin \b, la clave
+    # "monitor led" pescaba "monitoreo ambiental" (porque "monitor" es
+    # subcadena literal de "monitoreo") -- falso positivo puro.
+    # Comparar por palabra completa (no la frase entera) sigue tolerando
+    # plurales: "pantalla interactiva" calza en "pantallas interactivas"
+    # porque el plural empieza igual y "\b" no exige fin de palabra exacto
+    # aqui -- se usa una version simple que exige inicio de palabra.
     for clave in claves:
         tokens = [t for t in clave.split() if len(t) >= 4]
-        if tokens and all(t in texto_norm for t in tokens):
+        if tokens and all(re.search(rf"\b{re.escape(t)}(?:es|s)?\b", texto_norm) for t in tokens):
             return True
     return False
 
@@ -82,6 +88,25 @@ def departamento(release):
         reg = addr.get("region")
         if reg:
             return reg
+    return ""
+
+# Marcas conocidas del rubro (pantallas/audiovisual/interactivos). Best-effort:
+# no hay forma de validar contra un ejemplo real de Analid, asi que se arma
+# una lista de marcas comunes en el mercado peruano de este rubro y se busca
+# coincidencia literal en la descripcion. Puede fallar (marca no listada, o
+# escrita distinto) -- es una PREDICCION, no una extraccion garantizada.
+MARCAS_CONOCIDAS = [
+    "samsung", "lg", "benq", "epson", "viewsonic", "promethean", "smart",
+    "newline", "hisense", "tcl", "sony", "panasonic", "optoma", "sharp",
+    "nec", "philips", "xiaomi", "infocus", "coretec", "clevertouch",
+    "avocor", "boxlight", "vivitek", "acer", "asus", "hitachi", "planar",
+]
+
+def detecta_marca(texto_norm):
+    """Busca marcas conocidas en el texto ya normalizado (sin tildes, minusc)."""
+    for marca in MARCAS_CONOCIDAS:
+        if re.search(rf"\b{re.escape(marca)}\b", texto_norm):
+            return marca.upper()
     return ""
 
 def extrae_registro(release):
@@ -116,17 +141,30 @@ def extrae_registro(release):
         except ZeroDivisionError:
             precio_unit = None
 
+    # BUG REAL encontrado con datos reales (ago-2026): tender.title casi
+    # siempre trae el CODIGO del proceso (ej. "LP-ABR-61-2026-C/MPC-1"), no
+    # una descripcion legible -- la descripcion real y rica en detalle del
+    # producto vive en tender.description. Se guarda el codigo aparte en
+    # 'nomenclatura' y 'objeto' ahora prioriza la descripcion real.
+    nomenclatura = tender.get("title", "")
+    objeto = tender.get("description", "") or nomenclatura
+
+    items_desc = " | ".join(it.get("description", "") for it in items if it.get("description"))
+    marca_detectada = detecta_marca(normaliza(objeto + " " + items_desc))
+
     return {
         "ocid": release.get("ocid", ""),
         "fecha": (release.get("date") or "")[:10],
         "entidad": buyer.get("name", ""),
         "departamento": departamento(release),
-        "objeto": tender.get("title", "") or tender.get("description", ""),
+        "nomenclatura": nomenclatura,
+        "objeto": objeto,
         "cantidad": cantidad,
         "monto_referencial": monto_ref,
         "monto_adjudicado": monto_adj,
         "precio_unitario": precio_unit,
         "proveedor_ganador": proveedor,
+        "marca_detectada": marca_detectada,
         "estado": (tender.get("status") or ""),
         "enlace": f"https://contratacionesabiertas.oece.gob.pe/datosabiertos/ocds/{release.get('ocid','')}",
     }
@@ -135,22 +173,46 @@ def crea_tabla(con):
     con.execute("""
         CREATE TABLE IF NOT EXISTS licitaciones (
             ocid TEXT PRIMARY KEY,
-            fecha TEXT, entidad TEXT, departamento TEXT, objeto TEXT,
+            fecha TEXT, entidad TEXT, departamento TEXT, nomenclatura TEXT, objeto TEXT,
             cantidad REAL, monto_referencial REAL, monto_adjudicado REAL,
-            precio_unitario REAL, proveedor_ganador TEXT, estado TEXT, enlace TEXT
+            precio_unitario REAL, proveedor_ganador TEXT, marca_detectada TEXT,
+            estado TEXT, enlace TEXT
         )""")
+    con.commit()
+    # migracion suave: si la tabla ya existia de una corrida anterior (sin
+    # estas columnas nuevas), se agregan sin perder los datos ya guardados.
+    cols = {r[1] for r in con.execute("PRAGMA table_info(licitaciones)")}
+    for col, tipo in (("nomenclatura", "TEXT"), ("marca_detectada", "TEXT")):
+        if col not in cols:
+            con.execute(f"ALTER TABLE licitaciones ADD COLUMN {col} {tipo}")
     con.commit()
 
 def guarda(con, filas):
     # ON CONFLICT(ocid) evita duplicados: un proceso = una fila.
+    # IMPORTANTE: se actualizan TODOS los campos (no solo monto/proveedor/estado)
+    # -- si no, una correccion en como se arma un campo (como paso con 'objeto'
+    # y 'nomenclatura') nunca se refleja en registros que ya existian en la DB.
     con.executemany("""
-        INSERT INTO licitaciones VALUES
-        (:ocid,:fecha,:entidad,:departamento,:objeto,:cantidad,:monto_referencial,
-         :monto_adjudicado,:precio_unitario,:proveedor_ganador,:estado,:enlace)
+        INSERT INTO licitaciones
+        (ocid, fecha, entidad, departamento, nomenclatura, objeto, cantidad, monto_referencial,
+         monto_adjudicado, precio_unitario, proveedor_ganador, marca_detectada, estado, enlace)
+        VALUES
+        (:ocid,:fecha,:entidad,:departamento,:nomenclatura,:objeto,:cantidad,:monto_referencial,
+         :monto_adjudicado,:precio_unitario,:proveedor_ganador,:marca_detectada,:estado,:enlace)
         ON CONFLICT(ocid) DO UPDATE SET
+            fecha=excluded.fecha,
+            entidad=excluded.entidad,
+            departamento=excluded.departamento,
+            nomenclatura=excluded.nomenclatura,
+            objeto=excluded.objeto,
+            cantidad=excluded.cantidad,
+            monto_referencial=excluded.monto_referencial,
             monto_adjudicado=excluded.monto_adjudicado,
+            precio_unitario=excluded.precio_unitario,
             proveedor_ganador=excluded.proveedor_ganador,
-            estado=excluded.estado
+            marca_detectada=excluded.marca_detectada,
+            estado=excluded.estado,
+            enlace=excluded.enlace
     """, filas)
     con.commit()
 
@@ -187,6 +249,12 @@ def main():
     os.makedirs(os.path.dirname(db), exist_ok=True)
     con = sqlite3.connect(db)
     crea_tabla(con)
+    # Cada corrida reprocesa TODOS los anios configurados desde cero (no es
+    # incremental), asi que es seguro limpiar la tabla antes de repoblar --
+    # evita que se acumule basura de corridas viejas con matcher/config
+    # desactualizado (ver PROJECT_CONTEXT.md, hallazgo ago-2026).
+    con.execute("DELETE FROM licitaciones")
+    con.commit()
 
     total = 0
     if args.archivo:

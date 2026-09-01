@@ -75,10 +75,11 @@ def _colorea(fila):
     return [f"background-color: {c}" for _ in fila]
 
 def etiqueta_de(texto, etiquetas, excluir):
+    # palabra completa (\b), no subcadena -- mismo fix que extract.py/vigentes.py
     if any(x in texto for x in excluir): return None
     for et in etiquetas:
         toks = [t for t in _norm(et).split() if len(t) >= 4]
-        if toks and all(t in texto for t in toks):
+        if toks and all(re.search(rf"\b{re.escape(t)}(?:es|s)?\b", texto) for t in toks):
             return et
     return None
 

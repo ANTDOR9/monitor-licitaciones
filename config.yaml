@@ -36,6 +36,11 @@ palabras_clave:
   - "proyector interactivo"
   - "videoproyector"
   - "sistema de videoconferencia"
+  - "televisor"
+  - "smart tv"
+  - "pantalla publicitaria"
+  - "pantalla gigante"
+  - "pizarra electronica"
 
 # Palabras que DESCARTAN un registro aunque tenga palabra clave (evita falsos positivos).
 palabras_excluir:
