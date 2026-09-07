@@ -1,10 +1,10 @@
-# PROJECT CONTEXT — Monitor de Licitaciones (Brighter Peru)
+# PROJECT CONTEXT — Monitor de Licitaciones 
 
 > Este archivo es la MEMORIA del proyecto. Contiene todo lo necesario para
 > retomarlo en cualquier lugar (VS Code, otra PC, otro asistente) sin depender
 > de la conversacion original. Leelo primero.
 
-## 1. Encargo (de Monica / Brighter Peru)
+## 1. Encargo 
 Desarrollar un programa que extraiga informacion de licitaciones publicas del
 Estado peruano y la muestre en un dashboard interno (destino previsto:
 licitaciones.ibrighter.com). Objetivo de negocio: que Monica consulte que
