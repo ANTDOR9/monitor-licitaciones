@@ -12,6 +12,8 @@ import os, sqlite3
 import pandas as pd
 import streamlit as st
 import yaml
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -57,12 +59,51 @@ def altura_tabla(n_filas, minimo=140, maximo=560, alto_fila=35, cabecera=38):
     scroll vertical, ademas del horizontal)."""
     return int(min(maximo, max(minimo, cabecera + alto_fila * max(n_filas, 1))))
 
-def export_button(df, nombre):
+def _formatear_excel(ws, df, color_col=None, color_func=None):
+    """Cabecera en color/negrita, columnas auto-ajustadas, panel superior fijo,
+    autofiltro, y color de fila condicional (igual a como se ve en el dashboard),
+    todo con openpyxl sobre la hoja ya escrita por pandas."""
+    n_filas, n_cols = df.shape
+    if n_cols == 0:
+        return
+
+    cabecera_fill = PatternFill("solid", fgColor="1F4E78")
+    cabecera_font = Font(color="FFFFFF", bold=True)
+    for col_idx in range(1, n_cols + 1):
+        celda = ws.cell(row=1, column=col_idx)
+        celda.fill = cabecera_fill
+        celda.font = cabecera_font
+        celda.alignment = Alignment(vertical="center", wrap_text=True)
+    ws.row_dimensions[1].height = 32
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = ws.dimensions
+
+    for col_idx, col_nombre in enumerate(df.columns, start=1):
+        letra = get_column_letter(col_idx)
+        muestra = df[col_nombre].head(500)
+        max_len = max([len(str(col_nombre))] + [len(str(v)) for v in muestra]) if not muestra.empty else len(str(col_nombre))
+        ws.column_dimensions[letra].width = min(max(max_len + 2, 10), 45)
+
+    if color_col and color_func and color_col in df.columns:
+        for fila_idx, valor in enumerate(df[color_col], start=2):
+            color = color_func(valor)
+            if not color:
+                continue
+            fill = PatternFill("solid", fgColor=color.lstrip("#").upper())
+            for col_idx in range(1, n_cols + 1):
+                ws.cell(row=fila_idx, column=col_idx).fill = fill
+
+def export_button(df, nombre, color_col=None, color_func=None):
+    """color_col/color_func: columna y funcion (valor -> color hex o None) para
+    colorear cada fila del Excel igual que en la tabla del dashboard."""
     if df.empty:
         return
     ruta = os.path.join(BASE, "data", nombre)
     if st.button(f"Exportar a Excel ({nombre})", key=nombre):
-        df.to_excel(ruta, index=False)
+        with pd.ExcelWriter(ruta, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Datos")
+            ws = writer.sheets["Datos"]
+            _formatear_excel(ws, df, color_col=color_col, color_func=color_func)
         with open(ruta, "rb") as fh:
             st.download_button("Descargar Excel", fh, file_name=nombre, key="dl_"+nombre)
 
@@ -284,7 +325,8 @@ def vista_perucompras():
     st.info(f"🔎 Para ver el detalle de una orden: copia su **N° Orden de Compra** y búscalo en el "
             f"[buscador público de Perú Compras]({PERUCOMPRAS_PORTAL}) "
             f"(el sitio no permite enlazar directo a una orden especifica).")
-    export_button(f, "perucompras_export.xlsx")
+    export_button(tabla_pc, "perucompras_export.xlsx",
+                  color_col="Estado de entrega", color_func=_color_estado_entrega)
 
 # ================================================================
 # VISTA: SEACE / OECE (la de siempre)
@@ -364,7 +406,8 @@ def vista_seace():
                 with st.expander("Resumen por etiqueta"):
                     st.dataframe(f.groupby("Etiqueta").size().reset_index(name="Oportunidades"),
                                  use_container_width=True, hide_index=True)
-                export_button(f, "vigentes_export.xlsx")
+                export_button(tabla, "vigentes_export.xlsx",
+                              color_col="Estado", color_func=lambda v: COLOR_ESTADO.get(v))
 
     with tab2:
         df = leer("licitaciones")
@@ -434,9 +477,10 @@ def vista_seace():
             st.caption(f"Mostrando **{len(f)} de {len(df)}** procesos.")
 
             cols_mostrar = [c for c in df.columns if not c.startswith("_")]
-            tabla_hist = f[cols_mostrar].rename(columns={"tipo_proceso": "Tipo de licitación"})
+            tabla_hist = f[cols_mostrar].rename(columns={"tipo_proceso": "Tipo de licitación"}) \
+                                         .sort_values("fecha", ascending=False)
             st.dataframe(
-                tabla_hist.sort_values("fecha", ascending=False),
+                tabla_hist,
                 use_container_width=True, hide_index=True, height=altura_tabla(len(f)),
                 column_config={"enlace": st.column_config.LinkColumn(
                     "Buscar en OECE", display_text="Buscar proceso")},
@@ -444,7 +488,7 @@ def vista_seace():
             c1, c2 = st.columns(2)
             c1.metric("Licitaciones", len(f))
             c2.metric("Monto adjudicado total", f"S/ {f['monto_adjudicado'].fillna(0).sum():,.0f}")
-            export_button(f[cols_mostrar], "historico_export.xlsx")
+            export_button(tabla_hist, "historico_export.xlsx")
 
 # ================================================================
 # VISTA: PETROPERU (avisos de contratacion futura -- señal temprana)
@@ -528,12 +572,13 @@ def vista_petroperu():
     })
     cols_pp = ["Código de proceso", "N° Aviso", "Fecha publicación", "Descripción", "Etiqueta", "Documento"]
     cols_pp = [c for c in cols_pp if c in tabla_pp.columns]
+    tabla_pp = tabla_pp[cols_pp].sort_values("Fecha publicación", ascending=False)
     st.dataframe(
-        tabla_pp[cols_pp].sort_values("Fecha publicación", ascending=False),
+        tabla_pp,
         use_container_width=True, hide_index=True, height=altura_tabla(len(tabla_pp)),
         column_config={"Documento": st.column_config.LinkColumn("Documento", display_text="Ver PDF")},
     )
-    export_button(f, "petroperu_export.xlsx")
+    export_button(tabla_pp, "petroperu_export.xlsx")
 
 # ================================================================
 # VISTA: BANCO DE LA NACION (bases de licitaciones/concursos)
@@ -620,12 +665,13 @@ def vista_bnacion():
     })
     cols_bn = ["Tipo de proceso", "N°", "Año", "Fecha bases", "Objeto", "Etiqueta", "Documento"]
     cols_bn = [c for c in cols_bn if c in tabla_bn.columns]
+    tabla_bn = tabla_bn[cols_bn].sort_values("Fecha bases", ascending=False)
     st.dataframe(
-        tabla_bn[cols_bn].sort_values("Fecha bases", ascending=False),
+        tabla_bn,
         use_container_width=True, hide_index=True, height=altura_tabla(len(tabla_bn)),
         column_config={"Documento": st.column_config.LinkColumn("Documento", display_text="Ver bases (PDF)")},
     )
-    export_button(f, "bnacion_export.xlsx")
+    export_button(tabla_bn, "bnacion_export.xlsx")
 
 # ================================================================
 # ROUTER -- selector de fuente (se repite arriba en cada vista)
