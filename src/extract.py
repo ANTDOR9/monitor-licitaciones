@@ -150,6 +150,24 @@ def enlace_busqueda_oece(nomenclatura, fecha_iso):
     return f"https://contratacionesabiertas.oece.gob.pe/busqueda?{qs}"
 
 
+PREFIJOS_TIPO = {
+    "LP": "Licitación Pública", "CP": "Concurso Público",
+    "AS": "Adjudicación Simplificada", "SIE": "Subasta Inversa Electrónica",
+    "CD": "Contratación Directa", "AMC": "Adjudicación de Menor Cuantía",
+    "CS": "Comparación de Precios", "LPI": "Licitación Pública Internacional",
+}
+
+def tipo_de_proceso(nomenclatura, tender):
+    # 1) el propio OCDS a veces trae el nombre legible del metodo.
+    t = (tender.get("procurementMethodDetails") or "").strip()
+    if t:
+        return t
+    # 2) si no, se deriva del PREFIJO de la nomenclatura (ej "LP-ABR-61-2026..." -> LP).
+    m = re.match(r"([A-Z]{2,4})[-/]", nomenclatura or "")
+    if m:
+        return PREFIJOS_TIPO.get(m.group(1), m.group(1))
+    return ""
+
 def extrae_registro(release):
     """Aplana un compiled release OCDS a una fila util para Brighter."""
     tender = release.get("tender") or {}
@@ -207,6 +225,7 @@ def extrae_registro(release):
         "proveedor_ganador": proveedor,
         "marca_detectada": marca_detectada,
         "estado": (tender.get("status") or ""),
+        "tipo_proceso": tipo_de_proceso(nomenclatura, tender),
         # No hay pagina de detalle directa por OCID confirmada -- se arma un
         # link de BUSQUEDA en el portal humano (contratacionesabiertas.oece.gob.pe)
         # usando la nomenclatura y el año, que deja al usuario muy cerca del
@@ -227,7 +246,7 @@ def crea_tabla(con):
     # migracion suave: si la tabla ya existia de una corrida anterior (sin
     # estas columnas nuevas), se agregan sin perder los datos ya guardados.
     cols = {r[1] for r in con.execute("PRAGMA table_info(licitaciones)")}
-    for col, tipo in (("nomenclatura", "TEXT"), ("marca_detectada", "TEXT")):
+    for col, tipo in (("nomenclatura", "TEXT"), ("marca_detectada", "TEXT"), ("tipo_proceso", "TEXT")):
         if col not in cols:
             con.execute(f"ALTER TABLE licitaciones ADD COLUMN {col} {tipo}")
     con.commit()
@@ -240,10 +259,10 @@ def guarda(con, filas):
     con.executemany("""
         INSERT INTO licitaciones
         (ocid, fecha, entidad, departamento, nomenclatura, objeto, cantidad, monto_referencial,
-         monto_adjudicado, precio_unitario, proveedor_ganador, marca_detectada, estado, enlace)
+         monto_adjudicado, precio_unitario, proveedor_ganador, marca_detectada, estado, tipo_proceso, enlace)
         VALUES
         (:ocid,:fecha,:entidad,:departamento,:nomenclatura,:objeto,:cantidad,:monto_referencial,
-         :monto_adjudicado,:precio_unitario,:proveedor_ganador,:marca_detectada,:estado,:enlace)
+         :monto_adjudicado,:precio_unitario,:proveedor_ganador,:marca_detectada,:estado,:tipo_proceso,:enlace)
         ON CONFLICT(ocid) DO UPDATE SET
             fecha=excluded.fecha,
             entidad=excluded.entidad,
@@ -257,6 +276,7 @@ def guarda(con, filas):
             proveedor_ganador=excluded.proveedor_ganador,
             marca_detectada=excluded.marca_detectada,
             estado=excluded.estado,
+            tipo_proceso=excluded.tipo_proceso,
             enlace=excluded.enlace
     """, filas)
     con.commit()

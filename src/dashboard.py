@@ -51,6 +51,12 @@ def selector_todos(key, etiqueta_singular="registros"):
     return st.session_state[key]
 
 
+def altura_tabla(n_filas, minimo=140, maximo=560, alto_fila=35, cabecera=38):
+    """Altura dinamica: evita filas fantasma vacias cuando hay pocos
+    registros, y limita el alto maximo cuando hay muchos (ahi sí aparece
+    scroll vertical, ademas del horizontal)."""
+    return int(min(maximo, max(minimo, cabecera + alto_fila * max(n_filas, 1))))
+
 def export_button(df, nombre):
     if df.empty:
         return
@@ -168,6 +174,24 @@ def _colorea_perucompras_render(fila):
 
 st.set_page_config(page_title="Monitor de Licitaciones - Brighter", layout="wide")
 
+# Barra de scroll horizontal de las tablas mas gruesa y facil de agarrar
+# (por defecto Streamlit/glide-data-grid la deja muy delgada).
+st.markdown("""
+<style>
+[data-testid="stDataFrame"] div::-webkit-scrollbar {
+    height: 16px !important;
+    width: 16px !important;
+}
+[data-testid="stDataFrame"] div::-webkit-scrollbar-thumb {
+    background: #8a8a8a !important;
+    border-radius: 8px !important;
+}
+[data-testid="stDataFrame"] div::-webkit-scrollbar-track {
+    background: #e6e6e6 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 if "vista" not in st.session_state:
     st.session_state.vista = "seace"
 
@@ -254,7 +278,7 @@ def vista_perucompras():
     tabla_pc = tabla_pc[cols_pc].sort_values("Fecha aceptación", ascending=False)
     st.dataframe(
         tabla_pc.style.apply(_colorea_perucompras_render, axis=1),
-        use_container_width=True, hide_index=True,
+        use_container_width=True, hide_index=True, height=altura_tabla(len(tabla_pc)),
     )
     st.caption("🟢 Aceptada/Entregada  🟡 Pendiente  🔴 Vencida/Rechazada/Anulada  ⬜ Sin dato")
     st.info(f"🔎 Para ver el detalle de una orden: copia su **N° Orden de Compra** y búscalo en el "
@@ -321,11 +345,12 @@ def vista_seace():
                            "Prueba agregando o cambiando términos en el panel de la izquierda.")
             else:
                 st.divider()
-                cols = ["Estado", "Dias restantes", "Etiqueta", "nomenclatura", "entidad", "objeto",
+                cols = ["Estado", "Dias restantes", "Etiqueta", "tipo_proceso", "nomenclatura", "entidad", "objeto",
                         "descripcion", "valor_referencial", "fecha_fin_inscripcion",
                         "fecha_presentacion", "enlace"]
                 cols = [c for c in cols if c in f.columns]
                 tabla = f[cols].rename(columns={
+                    "tipo_proceso": "Tipo de licitación",
                     "nomenclatura": "Nomenclatura", "entidad": "Entidad", "objeto": "Objeto",
                     "descripcion": "Descripcion", "valor_referencial": "Valor referencial",
                     "fecha_fin_inscripcion": "Fin inscripcion", "fecha_presentacion": "Presentacion propuestas",
@@ -333,7 +358,7 @@ def vista_seace():
                 }).sort_values("Dias restantes", na_position="last")
                 st.dataframe(
                     tabla.style.apply(_colorea, axis=1),
-                    use_container_width=True, hide_index=True,
+                    use_container_width=True, hide_index=True, height=altura_tabla(len(tabla)),
                     column_config={"Ver en SEACE": st.column_config.LinkColumn("Ver en SEACE", display_text="Abrir portal")},
                 )
                 with st.expander("Resumen por etiqueta"):
@@ -409,9 +434,10 @@ def vista_seace():
             st.caption(f"Mostrando **{len(f)} de {len(df)}** procesos.")
 
             cols_mostrar = [c for c in df.columns if not c.startswith("_")]
+            tabla_hist = f[cols_mostrar].rename(columns={"tipo_proceso": "Tipo de licitación"})
             st.dataframe(
-                f[cols_mostrar].sort_values("fecha", ascending=False),
-                use_container_width=True, hide_index=True,
+                tabla_hist.sort_values("fecha", ascending=False),
+                use_container_width=True, hide_index=True, height=altura_tabla(len(f)),
                 column_config={"enlace": st.column_config.LinkColumn(
                     "Buscar en OECE", display_text="Buscar proceso")},
             )
@@ -504,7 +530,7 @@ def vista_petroperu():
     cols_pp = [c for c in cols_pp if c in tabla_pp.columns]
     st.dataframe(
         tabla_pp[cols_pp].sort_values("Fecha publicación", ascending=False),
-        use_container_width=True, hide_index=True,
+        use_container_width=True, hide_index=True, height=altura_tabla(len(tabla_pp)),
         column_config={"Documento": st.column_config.LinkColumn("Documento", display_text="Ver PDF")},
     )
     export_button(f, "petroperu_export.xlsx")
@@ -596,7 +622,7 @@ def vista_bnacion():
     cols_bn = [c for c in cols_bn if c in tabla_bn.columns]
     st.dataframe(
         tabla_bn[cols_bn].sort_values("Fecha bases", ascending=False),
-        use_container_width=True, hide_index=True,
+        use_container_width=True, hide_index=True, height=altura_tabla(len(tabla_bn)),
         column_config={"Documento": st.column_config.LinkColumn("Documento", display_text="Ver bases (PDF)")},
     )
     export_button(f, "bnacion_export.xlsx")
