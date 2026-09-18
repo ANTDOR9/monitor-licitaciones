@@ -127,6 +127,24 @@ def categoria_producto(texto):
             return cat
     return "Otro"
 
+# PetroPeru guarda fechas tipo "17-Ago-2026" (mes en texto, español) --
+# pd.to_datetime no las reconoce solo -- se parsean a mano.
+MESES_ES = {"ene": 1, "feb": 2, "mar": 3, "abr": 4, "may": 5, "jun": 6,
+            "jul": 7, "ago": 8, "set": 9, "sep": 9, "oct": 10, "nov": 11, "dic": 12}
+
+def parsear_fecha_es(txt):
+    m = re.match(r"(\d{1,2})[-\s]([A-Za-zÁÉÍÓÚáéíóú]{3,})[-\s](\d{4})", str(txt or ""))
+    if not m:
+        return pd.to_datetime(txt, errors="coerce", dayfirst=True)
+    dia, mes_txt, anio = m.groups()
+    mes = MESES_ES.get(_norm(mes_txt)[:3])
+    if not mes:
+        return pd.NaT
+    try:
+        return pd.Timestamp(int(anio), mes, int(dia))
+    except ValueError:
+        return pd.NaT
+
 # ---- colores para la tabla de Peru Compras, segun Estado de Entrega ----
 def _color_estado_entrega(estado):
     e = _norm(estado)
@@ -433,10 +451,51 @@ def vista_petroperu():
     if ver_todos:
         st.caption(f"👁️ Mostrando los {len(df)} avisos totales (sin filtrar por etiqueta).")
 
+    f["_texto_busq"] = f["descripcion"].fillna("").apply(_norm)
+    f["_pulgadas"] = f["_texto_busq"].apply(extraer_pulgadas)
+    f["_categoria_prod"] = f["_texto_busq"].apply(categoria_producto)
+
+    hcol1, hcol2 = st.columns([3, 1])
+    if "pp_avanzado" not in st.session_state:
+        st.session_state.pp_avanzado = False
+    if hcol2.button("🔍 Búsqueda avanzada", key="btn_pp_avanzado", use_container_width=True):
+        st.session_state.pp_avanzado = not st.session_state.pp_avanzado
+
+    total_antes_avanzado = len(f)
+    if st.session_state.pp_avanzado:
+        with st.expander("Filtros avanzados - PetroPerú", expanded=True):
+            opciones_pulg = TAMANOS_PULGADAS + ["Otro/no especificado"]
+            sel_pulg = st.multiselect("Tamaño de pantalla (pulgadas)", opciones_pulg, key="pp_pulg")
+
+            sel_cat = st.multiselect("Categoría de producto", list(CATEGORIAS_PRODUCTO.keys()) + ["Otro"], key="pp_cat_av")
+
+            fc1, fc2 = st.columns(2)
+            fechas_validas = f["fecha"].apply(parsear_fecha_es).dropna()
+            f_min_def = fechas_validas.min().date() if not fechas_validas.empty else None
+            f_max_def = fechas_validas.max().date() if not fechas_validas.empty else None
+            f_ini = fc1.date_input("Desde", value=f_min_def, key="pp_fini") if f_min_def else None
+            f_fin = fc2.date_input("Hasta", value=f_max_def, key="pp_ffin") if f_max_def else None
+
+            if sel_pulg:
+                con_otro = "Otro/no especificado" in sel_pulg
+                nums = [p for p in sel_pulg if p != "Otro/no especificado"]
+                mask = f["_pulgadas"].isin(nums)
+                if con_otro:
+                    mask = mask | f["_pulgadas"].isna()
+                f = f[mask]
+            if sel_cat:
+                f = f[f["_categoria_prod"].isin(sel_cat)]
+            if f_ini and f_fin:
+                fechas_f = f["fecha"].apply(parsear_fecha_es)
+                f = f[(fechas_f.dt.date >= f_ini) & (fechas_f.dt.date <= f_fin)]
+
+    st.caption(f"Mostrando **{len(f)} de {total_antes_avanzado}** avisos.")
+
     c1, c2 = st.columns(2)
     c1.metric("Avisos relevantes", len(f))
     c2.metric("Categorías distintas", f["categoria"].nunique())
 
+    f = f[[c for c in f.columns if not c.startswith("_")]]
     tabla_pp = f.rename(columns={
         "codigo": "Código de proceso", "numero": "N° Aviso", "fecha": "Fecha publicación",
         "descripcion": "Descripción", "categoria": "Etiqueta", "pdf": "Documento",
@@ -479,10 +538,56 @@ def vista_bnacion():
     if ver_todos:
         st.caption(f"👁️ Mostrando los {len(df)} procesos totales (sin filtrar por etiqueta).")
 
+    f["_texto_busq"] = f["objeto"].fillna("").apply(_norm)
+    f["_pulgadas"] = f["_texto_busq"].apply(extraer_pulgadas)
+    f["_categoria_prod"] = f["_texto_busq"].apply(categoria_producto)
+
+    hcol1, hcol2 = st.columns([3, 1])
+    if "bn_avanzado" not in st.session_state:
+        st.session_state.bn_avanzado = False
+    if hcol2.button("🔍 Búsqueda avanzada", key="btn_bn_avanzado", use_container_width=True):
+        st.session_state.bn_avanzado = not st.session_state.bn_avanzado
+
+    total_antes_avanzado = len(f)
+    if st.session_state.bn_avanzado:
+        with st.expander("Filtros avanzados - Banco de la Nación", expanded=True):
+            opciones_pulg = TAMANOS_PULGADAS + ["Otro/no especificado"]
+            sel_pulg = st.multiselect("Tamaño de pantalla (pulgadas)", opciones_pulg, key="bn_pulg")
+
+            sel_cat = st.multiselect("Categoría de producto", list(CATEGORIAS_PRODUCTO.keys()) + ["Otro"], key="bn_cat_av")
+
+            sel_tipo = st.multiselect("Tipo de proceso",
+                sorted(x for x in f["tipo"].dropna().unique() if x), key="bn_tipo_av")
+
+            fc1, fc2 = st.columns(2)
+            fechas_validas = pd.to_datetime(f["fecha"], errors="coerce", dayfirst=True).dropna()
+            f_min_def = fechas_validas.min().date() if not fechas_validas.empty else None
+            f_max_def = fechas_validas.max().date() if not fechas_validas.empty else None
+            f_ini = fc1.date_input("Desde", value=f_min_def, key="bn_fini") if f_min_def else None
+            f_fin = fc2.date_input("Hasta", value=f_max_def, key="bn_ffin") if f_max_def else None
+
+            if sel_pulg:
+                con_otro = "Otro/no especificado" in sel_pulg
+                nums = [p for p in sel_pulg if p != "Otro/no especificado"]
+                mask = f["_pulgadas"].isin(nums)
+                if con_otro:
+                    mask = mask | f["_pulgadas"].isna()
+                f = f[mask]
+            if sel_cat:
+                f = f[f["_categoria_prod"].isin(sel_cat)]
+            if sel_tipo:
+                f = f[f["tipo"].isin(sel_tipo)]
+            if f_ini and f_fin:
+                fechas_f = pd.to_datetime(f["fecha"], errors="coerce", dayfirst=True)
+                f = f[(fechas_f.dt.date >= f_ini) & (fechas_f.dt.date <= f_fin)]
+
+    st.caption(f"Mostrando **{len(f)} de {total_antes_avanzado}** procesos.")
+
     c1, c2 = st.columns(2)
     c1.metric("Procesos relevantes", len(f))
     c2.metric("Tipos distintos", f["tipo"].nunique())
 
+    f = f[[c for c in f.columns if not c.startswith("_")]]
     tabla_bn = f.rename(columns={
         "tipo": "Tipo de proceso", "numero": "N°", "anio": "Año", "fecha": "Fecha bases",
         "objeto": "Objeto", "categoria": "Etiqueta", "enlace": "Documento",
