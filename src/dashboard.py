@@ -187,6 +187,39 @@ def vista_perucompras():
         f = f[f["proveedor"].str.lower().str.contains(t, na=False) |
               f["entidad"].str.lower().str.contains(t, na=False)]
 
+    hcol1, hcol2 = st.columns([3, 1])
+    hcol1.write("")
+    if "pc_avanzado" not in st.session_state:
+        st.session_state.pc_avanzado = False
+    if hcol2.button("🔍 Búsqueda avanzada", key="btn_pc_avanzado", use_container_width=True):
+        st.session_state.pc_avanzado = not st.session_state.pc_avanzado
+
+    total_antes_avanzado = len(f)
+    if st.session_state.pc_avanzado:
+        with st.expander("Filtros avanzados - Perú Compras", expanded=True):
+            opciones_prov = sorted(set(f["proveedor"].dropna()))
+            sel_prov = st.multiselect("Proveedor", opciones_prov, key="pc_prov_av")
+
+            pc1, pc2 = st.columns(2)
+            p_max = pc1.number_input("Monto total máximo (S/, 0 = sin tope)", min_value=0, value=0, step=1000, key="pc_pmax")
+
+            fc1, fc2 = st.columns(2)
+            fechas_validas = pd.to_datetime(f["fecha_aceptacion"], errors="coerce").dropna()
+            f_min_def = fechas_validas.min().date() if not fechas_validas.empty else None
+            f_max_def = fechas_validas.max().date() if not fechas_validas.empty else None
+            f_ini = fc1.date_input("Desde", value=f_min_def, key="pc_fini") if f_min_def else None
+            f_fin = fc2.date_input("Hasta", value=f_max_def, key="pc_ffin") if f_max_def else None
+
+            if sel_prov:
+                f = f[f["proveedor"].isin(sel_prov)]
+            if p_max:
+                f = f[f["monto_total"].fillna(0) <= p_max]
+            if f_ini and f_fin:
+                fechas_f = pd.to_datetime(f["fecha_aceptacion"], errors="coerce")
+                f = f[(fechas_f.dt.date >= f_ini) & (fechas_f.dt.date <= f_fin)]
+
+    st.caption(f"Mostrando **{len(f)} de {total_antes_avanzado}** órdenes (de {len(df)} totales).")
+
     c1, c2, c3 = st.columns(3)
     c1.metric("Órdenes encontradas", len(f))
     c2.metric("Monto total", f"S/ {f['monto_total'].fillna(0).sum():,.0f}")
