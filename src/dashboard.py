@@ -103,6 +103,30 @@ def etiqueta_de(texto, etiquetas, excluir):
             return et
     return None
 
+# ---- Busqueda avanzada (Etapa 1 -- SEACE Historico) ----
+TAMANOS_PULGADAS = ["65", "75", "86", "98"]
+RE_PULGADAS = re.compile(r'(\d{2,3})\s?(?:"|pulgadas)', re.I)
+
+def extraer_pulgadas(texto):
+    m = RE_PULGADAS.search(texto or "")
+    return m.group(1) if m else None
+
+CATEGORIAS_PRODUCTO = {
+    "Pantalla interactiva": [r"pantalla\s+interactiv"],
+    "Pizarra digital": [r"pizarra\s+digital", r"pizarra\s+interactiv"],
+    "Panel interactivo": [r"panel\s+interactiv"],
+    "Monitor interactivo": [r"monitor\s+interactiv"],
+    "Pantalla LED (excluir)": [r"pantalla\s+led", r"video\s*wall", r"videowall"],
+    "Kiosco/Totem (excluir)": [r"kiosco", r"totem", r"t[oó]tem"],
+}
+
+def categoria_producto(texto):
+    texto = texto or ""
+    for cat, patrones in CATEGORIAS_PRODUCTO.items():
+        if any(re.search(p, texto) for p in patrones):
+            return cat
+    return "Otro"
+
 # ---- colores para la tabla de Peru Compras, segun Estado de Entrega ----
 def _color_estado_entrega(estado):
     e = _norm(estado)
@@ -271,16 +295,79 @@ def vista_seace():
         if df.empty:
             st.info("Sin historico. Corre:  python src/extract.py")
         else:
+            df = df.copy()
+            df["_texto_busq"] = (df["objeto"].fillna("") + " " + df["nomenclatura"].fillna("")).apply(_norm)
+            df["_pulgadas"] = df["_texto_busq"].apply(extraer_pulgadas)
+            df["_categoria_prod"] = df["_texto_busq"].apply(categoria_producto)
+
+            hcol1, hcol2 = st.columns([3, 1])
+            hcol1.subheader("Historico de adjudicaciones")
+            if "hist_avanzado" not in st.session_state:
+                st.session_state.hist_avanzado = False
+            if hcol2.button("🔍 Búsqueda histórico avanzado", key="btn_hist_avanzado", use_container_width=True):
+                st.session_state.hist_avanzado = not st.session_state.hist_avanzado
+
+            f = df
+
+            if st.session_state.hist_avanzado:
+                with st.expander("Filtros avanzados de histórico", expanded=True):
+                    opciones_pulg = TAMANOS_PULGADAS + ["Otro/no especificado"]
+                    sel_pulg = st.multiselect("Tamaño de pantalla (pulgadas)", opciones_pulg, key="h_pulg")
+
+                    sel_cat = st.multiselect("Categoría de producto", list(CATEGORIAS_PRODUCTO.keys()) + ["Otro"], key="h_cat")
+
+                    pc1, pc2 = st.columns(2)
+                    p_min = pc1.number_input("Precio unitario mínimo (S/)", min_value=0, value=0, step=500, key="h_pmin")
+                    p_max = pc2.number_input("Precio unitario máximo (S/, 0 = sin tope)", min_value=0, value=0, step=500, key="h_pmax")
+
+                    opciones_prov = sorted(set(f["proveedor_ganador"].dropna()) | set(f["marca_detectada"].dropna()))
+                    sel_prov = st.multiselect("Proveedor / marca ganadora", opciones_prov, key="h_prov")
+
+                    fc1, fc2 = st.columns(2)
+                    fechas_validas = pd.to_datetime(f["fecha"], errors="coerce").dropna()
+                    f_min_def = fechas_validas.min().date() if not fechas_validas.empty else None
+                    f_max_def = fechas_validas.max().date() if not fechas_validas.empty else None
+                    f_ini = fc1.date_input("Desde", value=f_min_def, key="h_fini") if f_min_def else None
+                    f_fin = fc2.date_input("Hasta", value=f_max_def, key="h_ffin") if f_max_def else None
+
+                    sel_depto = st.multiselect("Departamento / región",
+                        sorted(x for x in f["departamento"].dropna().unique() if x), key="h_depto")
+
+                    # -- aplicar todo en AND, sobre el resultado que ya trae "f" --
+                    if sel_pulg:
+                        con_otro = "Otro/no especificado" in sel_pulg
+                        nums = [p for p in sel_pulg if p != "Otro/no especificado"]
+                        mask = f["_pulgadas"].isin(nums)
+                        if con_otro:
+                            mask = mask | f["_pulgadas"].isna()
+                        f = f[mask]
+                    if sel_cat:
+                        f = f[f["_categoria_prod"].isin(sel_cat)]
+                    if p_min:
+                        f = f[f["precio_unitario"].fillna(0) >= p_min]
+                    if p_max:
+                        f = f[f["precio_unitario"].fillna(0) <= p_max]
+                    if sel_prov:
+                        f = f[f["proveedor_ganador"].isin(sel_prov) | f["marca_detectada"].isin(sel_prov)]
+                    if f_ini and f_fin:
+                        fechas_f = pd.to_datetime(f["fecha"], errors="coerce")
+                        f = f[(fechas_f.dt.date >= f_ini) & (fechas_f.dt.date <= f_fin)]
+                    if sel_depto:
+                        f = f[f["departamento"].isin(sel_depto)]
+
+            st.caption(f"Mostrando **{len(f)} de {len(df)}** procesos.")
+
+            cols_mostrar = [c for c in df.columns if not c.startswith("_")]
             st.dataframe(
-                df.sort_values("fecha", ascending=False),
+                f[cols_mostrar].sort_values("fecha", ascending=False),
                 use_container_width=True, hide_index=True,
                 column_config={"enlace": st.column_config.LinkColumn(
                     "Buscar en OECE", display_text="Buscar proceso")},
             )
             c1, c2 = st.columns(2)
-            c1.metric("Licitaciones", len(df))
-            c2.metric("Monto adjudicado total", f"S/ {df['monto_adjudicado'].fillna(0).sum():,.0f}")
-            export_button(df, "historico_export.xlsx")
+            c1.metric("Licitaciones", len(f))
+            c2.metric("Monto adjudicado total", f"S/ {f['monto_adjudicado'].fillna(0).sum():,.0f}")
+            export_button(f[cols_mostrar], "historico_export.xlsx")
 
 # ================================================================
 # VISTA: PETROPERU (avisos de contratacion futura -- señal temprana)
