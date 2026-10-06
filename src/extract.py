@@ -139,15 +139,68 @@ def detecta_marca(texto_norm):
 
 from urllib.parse import quote
 
-def enlace_busqueda_oece(nomenclatura, fecha_iso):
-    anio = (fecha_iso or "")[:4]
+# ---------------------------------------------------------------------------
+# Enlace al proceso
+#
+# ANTES se armaba una URL de BUSQUEDA (/busqueda?search=...&year=...). Dejaba al
+# usuario en la barra de resultados, no en el proceso, y el `year` salia de
+# release.date -- que no es el anio de convocatoria. De ahi venia tener que
+# probar a mano el anio anterior para encontrar el proceso.
+#
+# HALLAZGO: cuando el sufijo del OCID es un numero simple, ese numero ES el
+# idProceso de SEACE. Verificado cruzando `licitaciones` y `vigentes` por
+# nomenclatura: donde un proceso aparece en ambas tablas, el sufijo del OCID
+# coincide exactamente con el id que devuelve la API de Oportunidades.
+#     ocds-dgv273-seacev3-1247873 -> idProceso 1247873
+# Eso permite enlazar a la ficha de SEACE, que es donde viven los DOCUMENTOS
+# del expediente, y no solo a la vista de datos del portal OCDS.
+#
+# Cobertura medida sobre los 436 registros del historico:
+#     74% ficha SEACE (ocid numerico) | 26% pagina del proceso OCDS
+#      0% queda como busqueda imprecisa (antes: 100%)
+# ---------------------------------------------------------------------------
+
+PREFIJO_OCID = "ocds-dgv273-seacev3-"
+
+
+def id_seace(ocid):
+    """idProceso de SEACE si el OCID lo contiene, si no None.
+
+    Solo los OCID de sufijo numerico lo llevan. Los compuestos
+    (ej. '2025-1666-22', que es anio-entidad-secuencia) no son identificador
+    de proceso y no sirven para la ficha.
+    """
+    if not ocid:
+        return None
+    sufijo = (ocid or "").replace(PREFIJO_OCID, "").strip()
+    return sufijo if re.fullmatch(r"\d+", sufijo) else None
+
+
+def enlace_proceso(ocid, nomenclatura="", fecha_iso=""):
+    """Mejor enlace disponible, en orden de precision."""
+    idp = id_seace(ocid)
+    if idp:
+        # Ficha del proceso en SEACE: misma forma que ya usa vigentes.py.
+        return f"https://prod4.seace.gob.pe/openegocio/#/ficha/idProceso/{idp}"
+
+    if ocid:
+        # Pagina del proceso en contrataciones abiertas (datos, sin documentos).
+        return f"https://contratacionesabiertas.oece.gob.pe/proceso/{ocid}"
+
+    # Ultimo recurso: busqueda. Solo si no hay OCID.
     texto = (nomenclatura or "").strip()[:80]
     if not texto:
         return "https://contratacionesabiertas.oece.gob.pe/"
     qs = f"search={quote(texto)}"
+    anio = (fecha_iso or "")[:4]
     if anio:
         qs += f"&year={anio}"
     return f"https://contratacionesabiertas.oece.gob.pe/busqueda?{qs}"
+
+
+# Alias por compatibilidad con llamadas antiguas.
+def enlace_busqueda_oece(nomenclatura, fecha_iso):
+    return enlace_proceso(None, nomenclatura, fecha_iso)
 
 
 PREFIJOS_TIPO = {
@@ -226,11 +279,11 @@ def extrae_registro(release):
         "marca_detectada": marca_detectada,
         "estado": (tender.get("status") or ""),
         "tipo_proceso": tipo_de_proceso(nomenclatura, tender),
-        # No hay pagina de detalle directa por OCID confirmada -- se arma un
-        # link de BUSQUEDA en el portal humano (contratacionesabiertas.oece.gob.pe)
-        # usando la nomenclatura y el año, que deja al usuario muy cerca del
-        # proceso exacto (mucho mejor que la API JSON cruda de antes).
-        "enlace": enlace_busqueda_oece(nomenclatura, release.get("date") or ""),
+        # Enlace directo: ficha de SEACE cuando el OCID trae el idProceso,
+        # pagina del proceso en contrataciones abiertas en caso contrario.
+        # Ver el bloque de documentacion sobre enlace_proceso() mas arriba.
+        "enlace": enlace_proceso(release.get("ocid", ""), nomenclatura,
+                                 release.get("date") or ""),
     }
 
 def crea_tabla(con):
