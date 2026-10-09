@@ -120,13 +120,18 @@ def extraer_pulgadas(texto):
     m = RE_PULGADAS.search(texto or "")
     return m.group(1) if m else None
 
+# Los patrones aceptan plural. Sin la "s" opcional, "ADQUISICION DE PANTALLAS
+# INTERACTIVAS" no coincidía con "pantalla\s+interactiv" y caía en "Otro":
+# 40 de las 436 licitaciones del histórico estaban mal clasificadas por eso,
+# que es más de la mitad de las interactivas reales.
 CATEGORIAS_PRODUCTO = {
-    "Pantalla interactiva": [r"pantalla\s+interactiv"],
-    "Pizarra digital": [r"pizarra\s+digital", r"pizarra\s+interactiv"],
-    "Panel interactivo": [r"panel\s+interactiv"],
-    "Monitor interactivo": [r"monitor\s+interactiv"],
-    "Pantalla LED (excluir)": [r"pantalla\s+led", r"video\s*wall", r"videowall"],
-    "Kiosco/Totem (excluir)": [r"kiosco", r"totem", r"t[oó]tem"],
+    "Pantalla interactiva": [r"pantallas?\s+(?:\w+\s+){0,2}interactiv",
+                             r"pantallas?\s+tactil"],
+    "Pizarra digital": [r"pizarras?\s+(?:digital|interactiv|electronic)"],
+    "Panel interactivo": [r"(?:panel|paneles)\s+(?:\w+\s+){0,2}interactiv"],
+    "Monitor interactivo": [r"monitor(?:es)?\s+(?:\w+\s+){0,2}interactiv"],
+    "Pantalla LED (excluir)": [r"pantallas?\s+led", r"videos?\s*walls?", r"videowalls?"],
+    "Kiosco/Totem (excluir)": [r"k?ioscos?", r"quioscos?", r"t[oó]tems?", r"totems?"],
 }
 
 def categoria_producto(texto):

@@ -209,8 +209,15 @@ def _capa1(fila: dict) -> None:
     c[0].markdown(f"**{(fila.get('entidad') or '—')[:60]}**")
     c[0].caption(fila.get("nomenclatura") or "")
     c[1].metric("Fecha", (fila.get("fecha") or "—")[:10])
+    # Ojo con NaN: `if monto` da verdadero para NaN y la métrica mostraba
+    # "S/ nan". 121 de las 436 licitaciones no tienen monto adjudicado.
     monto = fila.get("monto_adjudicado")
-    c[2].metric("Monto adjudicado", f"S/ {monto:,.0f}" if monto else "—")
+    try:
+        import math
+        vacio = monto is None or (isinstance(monto, float) and math.isnan(monto))
+    except Exception:                                            # noqa: BLE001
+        vacio = monto is None
+    c[2].metric("Monto adjudicado", "—" if vacio else f"S/ {float(monto):,.0f}")
     c[3].metric("Categoría", fila.get("_categoria_prod") or "—")
 
     g = fila.get("proveedor_ganador")
@@ -283,8 +290,17 @@ def render(fila: dict, db: Path | str) -> None:
 
     docs = documentos_de(db, ocid)
     if not docs:
-        st.info("Este proceso no tiene documentos indexados. Puede que no publique "
-                "expediente, o que su año no esté indexado todavía.")
+        st.info(
+            "**Este proceso no tiene documentos indexados.**\n\n"
+            "La causa más común no es que no publique expediente, sino que el "
+            "proceso es más nuevo que el paquete OCDS descargado: el índice solo "
+            "ve lo que hay en `data/*.jsonl.gz`, y esos archivos son una foto del "
+            "día en que se bajaron.\n\n"
+            "Para incorporarlo:\n\n"
+            "```\npython src/extract.py          # vuelve a bajar el paquete del año\n"
+            "python src/indexar_documentos.py\n```\n\n"
+            "Si tras eso sigue sin documentos, el proceso efectivamente no publica "
+            "expediente descargable.")
         return
 
     etiquetas = [f"[{d['clase']}] {d['titulo'] or d['tipo_doc']} ({d['etapa']})"
