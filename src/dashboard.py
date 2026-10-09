@@ -677,11 +677,19 @@ def vista_comparador():
                 language="bash")
         return
 
+    # Las dos tablas viven en bases distintas: licitaciones.db se versiona y
+    # analisis.db no. Se adjunta la de analisis para poder cruzarlas.
     con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    analisis = pe.ruta_analisis(db)
+    if analisis != str(db):
+        con.execute(f"ATTACH DATABASE 'file:{analisis}?mode=ro' AS an")
+        fuente = "an.documentos"
+    else:
+        fuente = "documentos"
     procesos = pd.read_sql(
-        "SELECT l.*, d.categoria AS cat_doc, COUNT(*) AS n_docs "
-        "FROM documentos d JOIN licitaciones l ON l.ocid = d.ocid "
-        "GROUP BY l.ocid ORDER BY l.fecha DESC", con)
+        f"SELECT l.*, d.categoria AS cat_doc, COUNT(*) AS n_docs "
+        f"FROM {fuente} d JOIN licitaciones l ON l.ocid = d.ocid "
+        f"GROUP BY l.ocid ORDER BY l.fecha DESC", con)
     con.close()
 
     if procesos.empty:

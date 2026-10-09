@@ -34,11 +34,16 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from buscar_actas import (categoria, config, descripcion, filecode,   # noqa: E402
+from buscar_actas import (categoria, config, descripcion, relevante, filecode,   # noqa: E402
                           documentos as documentos_del_release,
                           ganadores, id_proceso, texto_de)
 
-DB = RAIZ / "data" / "licitaciones.db"
+#: Las tablas derivadas NO van en licitaciones.db. Esa base se versiona para
+#: que el tablero publico tenga datos, y lo derivado es justamente el analisis
+#: de competencia: que empresas se presentan, contra quien y con que resultado.
+#: Son datos construidos a partir de fuentes publicas, pero el trabajo de
+#: cruzarlos es el valor, y no tiene por que viajar al repositorio.
+DB = RAIZ / "data" / "analisis.db"
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS documentos (
@@ -88,10 +93,9 @@ def indexar(anio: int, solo: str = "", ruta: Path | None = None,
             except json.JSONDecodeError:
                 continue
 
-            txt = texto_de(rel)
-            if not any(k in txt for k in claves) or any(x in txt for x in excluir):
+            if not relevante(rel):
                 continue
-
+            txt = texto_de(rel)
             cat = categoria(txt)
             if solo and cat != solo:
                 continue

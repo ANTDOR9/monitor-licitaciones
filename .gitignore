@@ -27,6 +27,12 @@ data/*.pdf
 #                            ningún extractor en la nube
 #   muestra.jsonl            fixture mínima para probar extract.py sin red
 #   resultado_extractor.json salida del extractor, la usa evaluar_licitacion.py
+# Base de analisis: tablas derivadas (documentos, postores). Se reconstruye
+# con src/indexar_documentos.py y src/postores.py, y contiene el cruce de
+# competencia, que no tiene por que publicarse.
+data/analisis.db
+data/analisis.db-*
+
 !data/.gitkeep
 
 # ─────────────────────────────────────────────────────────────────────────────

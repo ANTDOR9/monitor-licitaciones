@@ -89,7 +89,14 @@ python src/contenedores.py --diagnostico      # con qué se pueden abrir los .ra
 python src/indexar_documentos.py --anios 2025 2026
 ```
 
-10) Evaluar un requerimiento contra las fichas de BTOUCH y de la competencia:
+10) Historial de postores: qué empresas se presentan, cuántas veces y contra
+    quién. Sale del OCDS, sin descargar ni leer PDF:
+```bash
+python src/postores.py --anios 2025 2026 --solo INTERACTIVA
+python src/postores.py --informe --csv data/postores.csv
+```
+
+11) Evaluar un requerimiento contra las fichas de BTOUCH y de la competencia:
 ```bash
 python src/fichas.py                                    # inventario de fichas
 python src/evaluar_licitacion.py --demo                 # ejemplo de 86"
@@ -110,6 +117,7 @@ Qué hace cada módulo nuevo:
 - `src/fichas.py` — fichas estructuradas de BTOUCH y competidores
 - `src/evaluar_licitacion.py` — compara exigido contra ficha y dictamina
 - `src/indexar_documentos.py` — vuelca los documentos del OCDS a la tabla `documentos`
+- `src/postores.py` — historial de participantes por empresa, con RUC
 - `src/panel_expediente.py` — el panel del tablero: ficha del proceso y, detrás de
   un botón, descarga, lectura y comparación contra BTOUCH
 

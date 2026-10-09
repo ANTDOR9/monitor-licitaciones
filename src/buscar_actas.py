@@ -165,6 +165,55 @@ def config() -> tuple[list[str], list[str]]:
                  "pizarra digital", "monitor interactivo"], ["protector de pantalla"])
 
 
+#: Config del matcher, cargada UNA vez. La primera version de esto leia
+#: config.yaml dentro de la funcion, o sea una vez por proceso del paquete:
+#: un año tardaba casi tres minutos en vez de cuarenta segundos.
+_MATCHER: dict = {}
+
+
+def _matcher() -> dict:
+    global _MATCHER
+    if not _MATCHER:
+        import yaml                                              # noqa: PLC0415
+        import extract as E                                      # noqa: PLC0415
+        cfg = yaml.safe_load((RAIZ / "config.yaml").read_text(encoding="utf-8"))
+        claves = [E.normaliza(x) for x in cfg.get("palabras_clave") or []]
+        excl = [E.normaliza(x) for x in cfg.get("palabras_excluir") or []]
+        # Tokens de 4+ letras: filtro barato previo. El matcher exige que TODAS
+        # las palabras largas de alguna clave aparezcan, asi que todo proceso
+        # que calce contiene al menos uno de estos. Descarta el 99% sin
+        # normalizar nada.
+        tokens = {tok for c in claves for tok in c.split() if len(tok) >= 4}
+        _MATCHER = {"claves": claves, "excl": excl, "tokens": tokens, "E": E}
+    return _MATCHER
+
+
+def relevante(release: dict) -> bool:
+    """
+    ¿Este proceso es del rubro?
+
+    Reusa el matcher de `extract.py` en lugar de comparar subcadenas. La
+    diferencia no es cosmetica: `"pantalla interactiva" in texto` es falso
+    para "PANTALLAS INTERACTIVAS", y medido sobre 2026 la comparacion ingenua
+    encontraba 13 procesos de paneles interactivos donde el matcher real
+    encuentra 35. Se perdia el 63%, siempre los plurales.
+
+    El matcher de extract.py ademas aisla los textos candidatos por item, lo
+    que evita que dos items sin relacion entre si se combinen y simulen una
+    coincidencia.
+    """
+    m = _matcher()
+    t = (release.get("tender") or {})
+    crudo = normaliza(" ".join([
+        t.get("title") or "", t.get("description") or "",
+        " ".join((it.get("description") or "") for it in (t.get("items") or [])),
+    ]))
+    if not any(tok in crudo for tok in m["tokens"]):
+        return False
+    return m["E"].coincide_alguno(m["E"].textos_candidatos(release),
+                                  m["claves"], m["excl"])
+
+
 def texto_de(release: dict) -> str:
     t = release.get("tender") or {}
     return normaliza(" ".join([
@@ -244,10 +293,7 @@ def buscar(ruta: Path, limite: int, solo: str = "") -> tuple[list[dict], dict]:
                 continue
 
             txt = texto_de(rel)
-            if not any(k in txt for k in claves):
-                continue
-            if any(x in txt for x in excluir):
-                stats["excluidos"] += 1
+            if not relevante(rel):
                 continue
             stats["del_rubro"] += 1
 

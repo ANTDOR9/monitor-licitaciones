@@ -602,3 +602,68 @@ manual de 3 expedientes— pero no debe leerse como cobertura.
     python src/evaluar_licitacion.py --demo                      # ejemplo 86"
     python src/evaluar_licitacion.py --json data/resultado_extractor.json --expediente 7
     python src/evaluar_licitacion.py --json data/resultado_extractor.json --resumen
+
+## 13. Historial de postores — `src/postores.py` (oct-2026)
+
+### El dato no está en los PDF: está en el OCDS
+
+El camino intuitivo para saber qué empresas se presentan a cada licitación es
+bajar "Documentos de Presentación de Propuestas", descomprimir el RAR, pasar
+los PDF por OCR y reconocer razones sociales. No hace falta. El OCDS publica
+en `parties` un registro por participante, con su rol:
+
+    tenderer          se presentó
+    supplier          además ganó
+    buyer             la entidad que compra
+    procuringEntity   la que conduce el procedimiento
+
+Y cada uno trae el RUC en `identifier`, que es clave estable: no hay que
+normalizar nombres ni resolver "S.A.C." contra "SAC". También existe
+`tender.tenderers` (más pobre, sin roles) y `tender.numberOfTenderers`.
+
+Comparación de costo para el mismo dato:
+
+| vía | costo | resultado |
+|---|---|---|
+| PDF de propuestas | descarga + RAR + OCR por expediente, horas | nombres sucios, falla en escaneos |
+| OCDS `parties` | ~38 s por año sobre un archivo ya descargado | completo, con RUC |
+
+### Medición sobre 2025–2026, categoría INTERACTIVA
+
+    procesos                24
+    empresas distintas     229
+    participaciones        440   (mediana 18,5 por proceso; máximo 42)
+    procesos con ganador    17 de 24
+
+Las más presentes: STANDAR S.R.L. (12 participaciones, 0 ganadas),
+CUY TECHNOLOGIES (10), REM COMUNICACIONES (9), OK COMPUTER (8),
+JC SISTEMAS (8). Las diez más presentes concentran el 18% de las
+participaciones, o sea un mercado atomizado, sin un actor dominante.
+
+Validación: BRIGHTER (PERU) S.A.C. aparece con 5 participaciones y 1 ganada
+(Municipalidad Distrital de Yarabamba, julio 2026). EDUBOARD, CONSATEL,
+OK COMPUTER y CUY TECHNOLOGIES —ya identificados en la investigación web—
+aparecen también, lo que confirma que la fuente mide lo que se espera.
+
+Dato de mercado: los postores más frecuentes ganan poco. Los cinco primeros
+suman 47 participaciones y ninguna adjudicación.
+
+### Ampliar a 3 o 4 años
+
+Es viable. Por año: ~150 MB de descarga (una vez) y ~38 s de recorrido. Para
+cuatro años, unos 600 MB y dos minutos y medio.
+
+    config.yaml ->  anios: [2023, 2024, 2025, 2026]
+    python src/extract.py --refrescar
+    python src/postores.py --anios 2023 2024 2025 2026 --solo INTERACTIVA
+
+Queda por verificar si los paquetes de 2023 y 2024 publican `parties` con la
+misma completitud; la tabla "Por año" del informe lo delata enseguida, porque
+si un año trae muchas menos participaciones por proceso es que no las publica.
+
+### Lo que esta vía NO da
+
+La marca ofertada por cada postor y el monto de las ofertas perdedoras. El
+OCDS solo publica el monto del ganador. La marca, además, tampoco está en los
+documentos de adjudicación (sección 11), así que no hay vía documental que la
+resuelva: queda la inferencia del motor de evaluación (sección 12).

@@ -31,6 +31,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 TMP = RAIZ / "tmp" / "panel"
 
+
+def ruta_analisis(db_principal: Path | str) -> str:
+    """
+    Las tablas derivadas viven en data/analisis.db, no en licitaciones.db.
+
+    Se acepta igual la base principal si el analisis esta ahi: las versiones
+    anteriores lo guardaban junto y no tiene sentido romper una instalacion
+    existente por eso.
+    """
+    analisis = Path(db_principal).parent / "analisis.db"
+    if analisis.exists():
+        return str(analisis)
+    return str(db_principal)
+
 COLORES = {"CUMPLE": "#C6E0B4", "OBSERVADO": "#FFF2CC", "NO CUMPLE": "#F8CBAD",
            "SIN DATO": "#EDEDED", "REVISIÓN MANUAL": "#FFF2CC"}
 
@@ -61,7 +75,7 @@ PRIORIDAD_PANEL = {
 
 def hay_indice(db: Path | str) -> bool:
     try:
-        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+        con = sqlite3.connect(f"file:{ruta_analisis(db)}?mode=ro", uri=True)
         n = con.execute("select count(*) from documentos").fetchone()[0]
         con.close()
         return n > 0
@@ -74,7 +88,7 @@ def documentos_de(db: Path | str, ocid: str) -> list[dict]:
     if not ocid:
         return []
     try:
-        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+        con = sqlite3.connect(f"file:{ruta_analisis(db)}?mode=ro", uri=True)
         con.row_factory = sqlite3.Row
         filas = [dict(r) for r in con.execute(
             "select * from documentos where ocid = ? order by etapa", (ocid,))]
