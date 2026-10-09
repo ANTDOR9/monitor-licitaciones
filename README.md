@@ -211,6 +211,22 @@ Datos: OCDS / OECE (ex OSCE), Perú Compras, PetroPerú y Banco de la Nación,
 licencia CC BY 4.0.
 
 
+## Despliegue en Streamlit Cloud
+
+`packages.txt` lista los paquetes de sistema que el panel de expediente
+necesita: tesseract con el idioma español, poppler y el lector de archivos
+comprimidos. Esa máquina arranca limpia en cada despliegue.
+
+**Ese archivo no admite comentarios.** Streamlit Cloud pasa cada línea a
+`apt-get install`, así que una línea que empiece con `#` se interpreta como un
+nombre de paquete, falla la instalación y la aplicación no levanta: aparece
+"Oh no. Error running app". Solo nombres de paquete, uno por línea, sin tildes.
+
+Si solo querés el tablero publicado y preferís hacer el análisis de expedientes
+en tu máquina, podés borrar `packages.txt`: el dashboard y los cuatro
+extractores no lo necesitan. Tené en cuenta además que el OCR de un documento
+grande puede superar la memoria del plan gratuito.
+
 ## El panel de comparación dentro del tablero
 
 En la pestaña **Histórico de adjudicaciones**, al pie, hay un selector de
