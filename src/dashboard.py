@@ -197,6 +197,19 @@ st.markdown("""
 [data-testid="stDataFrame"] div::-webkit-scrollbar-track {
     background: #e6e6e6 !important;
 }
+/* Quinto botón en verde: el comparador no es otra fuente de datos, es la
+   función propia del proyecto. El selector por clave existe desde Streamlit
+   1.39; en versiones anteriores el botón funciona igual, solo que gris, y el
+   círculo verde de la etiqueta lo sigue distinguiendo. */
+.st-key-sel_comparador button {
+    background-color: #1E8449 !important;
+    border-color: #1E8449 !important;
+    color: #FFFFFF !important;
+}
+.st-key-sel_comparador button:hover {
+    background-color: #166B3A !important;
+    border-color: #166B3A !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -456,26 +469,8 @@ def vista_seace():
             c2.metric("Monto adjudicado total", f"S/ {f['monto_adjudicado'].fillna(0).sum():,.0f}")
             export_button(f[cols_mostrar], "historico_export.xlsx")
 
-            # ---------------------------------------------------------------
-            # Comparación contra BTOUCH. Vive en src/panel_expediente.py para
-            # que este archivo siga siendo solo el tablero.
-            # ---------------------------------------------------------------
-            st.divider()
-            st.subheader("🔍 Comparar un proceso contra las pantallas BTOUCH")
-
-            if not len(f):
-                st.caption("No hay procesos en el filtro actual.")
-            else:
-                import panel_expediente as pe
-
-                sel = f.sort_values("fecha", ascending=False).head(400).reset_index(drop=True)
-                def _etiqueta(i):
-                    r = sel.loc[i]
-                    return f"{(r.get('fecha') or '')[:10]} · {str(r.get('nomenclatura') or '')[:28]} · {str(r.get('entidad') or '')[:40]}"
-
-                j = st.selectbox("Proceso a analizar", range(len(sel)),
-                                 format_func=_etiqueta, key="sel_proceso_hist")
-                pe.render(sel.loc[j].to_dict(), ruta_db())
+            st.caption("La comparación contra BTOUCH está ahora en el botón "
+                       "**Comparador BTOUCH**, arriba.")
 
 # ================================================================
 # VISTA: PETROPERU (avisos de contratacion futura -- señal temprana)
@@ -661,11 +656,82 @@ def vista_bnacion():
 # ================================================================
 # ROUTER -- selector de fuente (se repite arriba en cada vista)
 # ================================================================
+# ================================================================
+# VISTA: COMPARADOR BTOUCH
+# ================================================================
+def vista_comparador():
+    import panel_expediente as pe
+
+    st.title("🟢 Comparador BTOUCH")
+    st.caption(
+        "Toma lo que una entidad EXIGIO en sus bases y lo compara, campo por campo, "
+        "contra las fichas de BTOUCH y de la competencia. Responde si BTOUCH podia "
+        "presentarse a ese proceso y con que modelo, y que marcas quedaban fuera por "
+        "las especificaciones pedidas."
+    )
+
+    db = ruta_db()
+    if not pe.hay_indice(db):
+        st.warning("Todavia no hay documentos indexados.")
+        st.code("python src/extract.py --refrescar\npython src/indexar_documentos.py",
+                language="bash")
+        return
+
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    procesos = pd.read_sql(
+        "SELECT l.*, d.categoria AS cat_doc, COUNT(*) AS n_docs "
+        "FROM documentos d JOIN licitaciones l ON l.ocid = d.ocid "
+        "GROUP BY l.ocid ORDER BY l.fecha DESC", con)
+    con.close()
+
+    if procesos.empty:
+        st.info("Ningun proceso del historico tiene documentos indexados todavia.")
+        return
+
+    cats = sorted(x for x in procesos["cat_doc"].dropna().unique() if x)
+    por_defecto = ["INTERACTIVA"] if "INTERACTIVA" in cats else []
+    c1, c2 = st.columns([2, 3])
+    sel_cat = c1.multiselect("Categoria de producto", cats, default=por_defecto,
+                             key="cmp_cat",
+                             help="Por defecto solo paneles interactivos, que es "
+                                  "donde compite BTOUCH.")
+    txt = c2.text_input("Buscar en entidad, nomenclatura u objeto", key="cmp_txt")
+
+    f = procesos
+    if sel_cat:
+        f = f[f["cat_doc"].isin(sel_cat)]
+    if txt:
+        campos = (f["entidad"].fillna("") + " " + f["nomenclatura"].fillna("")
+                  + " " + f["objeto"].fillna("")).str.lower()
+        f = f[campos.str.contains(txt.lower(), regex=False)]
+
+    k1, k2 = st.columns(2)
+    k1.metric("Procesos analizables", len(f))
+    k2.metric("Documentos disponibles", int(f["n_docs"].sum()) if len(f) else 0)
+
+    if not len(f):
+        st.info("Ningun proceso coincide con el filtro.")
+        return
+
+    f = f.reset_index(drop=True)
+
+    def _etiqueta(i):
+        r = f.loc[i]
+        return (f"{str(r['fecha'])[:10]} - {str(r.get('nomenclatura') or '')[:26]} - "
+                f"{str(r.get('entidad') or '')[:40]} - {int(r['n_docs'])} doc(s)")
+
+    j = st.selectbox("Proceso a analizar", range(len(f)), format_func=_etiqueta,
+                     key="cmp_proceso")
+    st.divider()
+    pe.render(f.loc[j].to_dict(), db)
+
+
 FUENTES = {
     "seace": "📡 SEACE / OECE",
     "perucompras": "🛒 Perú Compras",
     "petroperu": "🛢️ PetroPerú",
     "bnacion": "🏦 Banco de la Nación",
+    "comparador": "🟢 Comparador BTOUCH",
 }
 
 def selector_fuente():
@@ -685,5 +751,7 @@ elif st.session_state.vista == "petroperu":
     vista_petroperu()
 elif st.session_state.vista == "bnacion":
     vista_bnacion()
+elif st.session_state.vista == "comparador":
+    vista_comparador()
 else:
     vista_seace()
