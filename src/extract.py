@@ -50,6 +50,28 @@ def descargar_anio(url_tpl, anio, destino):
             f.write(chunk)
     return destino
 
+def asegurar_paquete(cfg, anio, destino, dias=7, forzar=False):
+    """
+    Devuelve la ruta del paquete del año, bajándolo si hace falta.
+
+    Antes, la condición era `if not os.path.exists(destino)`: una vez
+    descargado, el archivo no se renovaba nunca y nadie lo decía. El efecto
+    combinado con la purga es que una corrida podía REDUCIR el histórico, al
+    reconstruirlo desde una foto de hace semanas.
+    """
+    import time
+
+    if os.path.exists(destino) and not forzar:
+        edad = (time.time() - os.path.getmtime(destino)) / 86400
+        if edad <= dias:
+            print(f"  {anio}: usando el paquete local "
+                  f"(descargado hace {edad:.0f} día(s)).")
+            return destino
+        print(f"  {anio}: el paquete local tiene {edad:.0f} días; se renueva.")
+    descargar_anio(cfg["fuente"]["url_anual"], anio, destino)
+    return destino
+
+
 def textos_candidatos(release):
     """Devuelve una LISTA de textos candidatos por separado (no un solo bloque
     pegado), para que el matcher revise cada uno de forma independiente.
@@ -361,6 +383,10 @@ def procesa_fuente(ruta, cfg, con):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--archivo", help="ruta a un .jsonl o .jsonl.gz local")
+    ap.add_argument("--refrescar", action="store_true",
+                    help="volver a descargar los paquetes aunque estén presentes")
+    ap.add_argument("--dias-maximo", type=int, default=7, metavar="N",
+                    help="renovar el paquete si tiene más de N días (por defecto 7)")
     args = ap.parse_args()
     cfg = cargar_config()
     db = os.path.join(BASE, cfg["salida"]["base_datos"])
@@ -371,6 +397,12 @@ def main():
     # incremental), asi que es seguro limpiar la tabla antes de repoblar --
     # evita que se acumule basura de corridas viejas con matcher/config
     # desactualizado (ver PROJECT_CONTEXT.md, hallazgo ago-2026).
+    # La purga es correcta —evita arrastrar filas de configuraciones viejas—
+    # pero era silenciosa, y eso la vuelve peligrosa cuando el paquete local
+    # está desactualizado: reconstruye el histórico a partir de una foto vieja
+    # y se lleva por delante los procesos más nuevos. Pasó: una corrida con
+    # paquetes de hace un mes borró 59 licitaciones de agosto a octubre.
+    _antes = con.execute("SELECT COUNT(*) FROM licitaciones").fetchone()[0]
     con.execute("DELETE FROM licitaciones")
     con.commit()
 
@@ -380,11 +412,18 @@ def main():
     else:
         for anio in cfg["fuente"]["anios"]:
             destino = os.path.join(BASE, "data", f"{anio}.jsonl.gz")
-            if not os.path.exists(destino):
-                descargar_anio(cfg["fuente"]["url_anual"], anio, destino)
-            total += procesa_fuente(destino, cfg, con)
+            total += procesa_fuente(
+                asegurar_paquete(cfg, anio, destino,
+                                 dias=args.dias_maximo, forzar=args.refrescar),
+                cfg, con)
 
     print(f"\nListo. {total} licitaciones relevantes en la base: {db}")
+    if total < _antes:
+        print(f"\nATENCIÓN: antes había {_antes} y ahora hay {total}: "
+              f"se perdieron {_antes - total} filas.")
+        print("Suele significar que los paquetes locales son más viejos que "
+              "los procesos que ya estaban cargados.")
+        print("Volvé a correr con --refrescar para bajarlos de nuevo.")
     con.close()
 
 if __name__ == "__main__":
