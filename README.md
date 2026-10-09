@@ -222,10 +222,10 @@ comprimidos. Esa máquina arranca limpia en cada despliegue.
 nombre de paquete, falla la instalación y la aplicación no levanta: aparece
 "Oh no. Error running app". Solo nombres de paquete, uno por línea, sin tildes.
 
-Si solo querés el tablero publicado y preferís hacer el análisis de expedientes
-en tu máquina, podés borrar `packages.txt`: el dashboard y los cuatro
-extractores no lo necesitan. Tené en cuenta además que el OCR de un documento
-grande puede superar la memoria del plan gratuito.
+Si solo se quiere publicar el tablero y dejar el análisis de expedientes para
+una ejecución local, `packages.txt` puede eliminarse: el dashboard y los cuatro
+extractores no lo necesitan. Conviene tener en cuenta, además, que el OCR de un
+documento grande puede superar la memoria del plan gratuito.
 
 ## El panel de comparación dentro del tablero
 

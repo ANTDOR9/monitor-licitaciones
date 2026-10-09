@@ -7,8 +7,8 @@
 ## 1. Encargo 
 Desarrollar un programa que extraiga informacion de licitaciones publicas del
 Estado peruano y la muestre en un dashboard interno (destino previsto:
-licitaciones.ibrighter.com). Objetivo de negocio: que Monica consulte que
-compra el Estado en **pantallas interactivas, pizarras digitales, kioscos/totem
+un subdominio interno). Objetivo de negocio: que el area comercial consulte
+que compra el Estado en **pantallas interactivas, pizarras digitales, kioscos/totem
 y equipamiento audiovisual**, con informacion historica. Sin correos de resumen.
 
 - Fase 1: historico de adjudicaciones de los ultimos 2 anios (que compro el
@@ -49,7 +49,7 @@ y equipamiento audiovisual**, con informacion historica. Sin correos de resumen.
 4. Plurales en espanol: "pantalla interactiva" debe calzar con "pantallas
    interactivas". -> el matcher compara por palabra, no por frase completa.
 
-## 4. Stack (pedido por Monica)
+## 4. Stack (requisito del area)
 Python + SQLite + Streamlit + Docker. Extraccion y dashboard SEPARADOS.
 Palabras clave y filtros en config.yaml, editables SIN tocar codigo.
 Unico correo del sistema: alerta si falla la extraccion (pendiente, Fase 2).
@@ -72,7 +72,7 @@ PENDIENTE:
   requiere reglas/regex adicionales).
 - Fase 2 alerta por correo si falla la extraccion (pendiente).
 - Mostrar 'vigentes' en el dashboard (tabla aparte) y programar corrida diaria.
-- Empaquetar con Docker y desplegar en licitaciones.ibrighter.com.
+- Empaquetar con Docker y desplegar en el servidor interno.
 
 ## 6. Campos objetivo por registro
 entidad, departamento, objeto, marca/modelo, cantidad, monto_referencial,
@@ -171,7 +171,7 @@ como SEACE.
 
 ## 8. Roadmap / Prioridades (definido ago-2026, sesión pausada aquí)
 
-Orden acordado con Anthony:
+Orden de trabajo acordado:
 
 1. **SEACE** — HECHO. Vigentes (en vivo, API pública) + Histórico (OCDS
    OECE). Panel de etiquetas editable, coloreado por estado.
@@ -222,12 +222,12 @@ Orden acordado con Anthony:
    (mismo principio que ya se aplicó en Vigentes/SEACE).
 
 ### Otros pendientes menores (no bloqueantes)
-- Enlaces rotos en la versión ya deployada de Anthony (mencionado de pasada,
-  no resuelto esta sesión).
+- Enlaces rotos en la versión desplegada. RESUELTO: ver sección 9, el enlace
+  ahora apunta a la ficha del proceso en el SEACE.
 - Deploy a Streamlit Community Cloud desde
   https://github.com/ANTDOR9/monitor-licitaciones (conectar repo en
-  share.streamlit.io -> auto-redeploy en cada push). Pendiente resolver que
-  `data/licitaciones.db` no vive en git (dashboard depende de correr los
+  share.streamlit.io -> auto-redeploy en cada push). RESUELTO: `data/licitaciones.db`
+  se versiona (base ya filtrada, ~3 MB) (dashboard depende de correr los
   extractores localmente primero) -- ver opciones planteadas en sesión:
   (1) que Vigentes consulte la API en vivo igual que la version de
   referencia, dejando Historico/Perú Compras con snapshot subido a mano, o
@@ -502,10 +502,11 @@ sustantivo de pantalla. Universo corregido:
 1. El script informó "los documentos son imágenes escaneadas" cuando lo único
    que faltaba era `pypdf`. Cero caracteres por falta de librería no dice NADA
    sobre el documento. Ahora devuelve "MEDICIÓN INVÁLIDA" y código 4.
-2. Se dio por hecho que la máquina de Anthony tenía tesseract. No lo tiene
-   (`tesseract: command not found`). Los 91.7% de F1 y los benchmarks de DPI
-   del prototipo se corrieron en el contenedor de Claude, no en su Windows.
-   Para OCR local hace falta instalarlo con el paquete `spa`.
+2. Se dio por hecho que el equipo de trabajo tenía tesseract instalado. No lo
+   tenía (`tesseract: command not found`). El F1 de 91.7% y los benchmarks de
+   DPI del prototipo se midieron en otro entorno, con las herramientas ya
+   presentes. Para OCR local hay que instalarlo con el paquete `spa`;
+   `src/comprobar_entorno.py` lo verifica.
 
 ## 12. Motor de evaluación — `src/fichas.py` + `src/evaluar_licitacion.py`
 
