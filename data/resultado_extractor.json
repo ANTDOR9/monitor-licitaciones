@@ -1,0 +1,963 @@
+[
+  {
+    "expediente": "1",
+    "archivos": 2,
+    "nomenclatura": "LP-ABR-12-2026-MDMM-1",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20609276224",
+        "razon_social": "CONSORCIO TECNOLOGIA"
+      },
+      {
+        "ruc": "20605361901",
+        "razon_social": "INVERSIONES MARHIL S.R.L"
+      },
+      {
+        "ruc": "20456006371",
+        "razon_social": "ARMELCON SERVICIOS MULTIPLES Y EN CONSTRUCCION E.I.R.L"
+      }
+    ],
+    "incidencias": [
+      "no se localizó el requerimiento técnico"
+    ]
+  },
+  {
+    "expediente": "10",
+    "archivos": 2,
+    "nomenclatura": null,
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [],
+    "incidencias": [
+      "sin reporte de postores"
+    ]
+  },
+  {
+    "expediente": "11",
+    "archivos": 2,
+    "nomenclatura": "LP-ABR-5-2025-UNDAC/BIENES-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "postores": [
+      {
+        "ruc": "20555906138",
+        "razon_social": "NYTEC S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "12",
+    "archivos": 2,
+    "nomenclatura": "AS-SM-12-2025-UNAJ/CS-2",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": null,
+        "razon_social": "OJEDA RIEGA GERMAN MARTIN"
+      },
+      {
+        "ruc": null,
+        "razon_social": "JL BUSINESS AND SERVICE S.A.C"
+      },
+      {
+        "ruc": null,
+        "razon_social": "STANDAR S.R.L"
+      },
+      {
+        "ruc": null,
+        "razon_social": "OK COMPUTER S.A.C"
+      },
+      {
+        "ruc": null,
+        "razon_social": "MUR TECNOLOGIA S.A.C"
+      },
+      {
+        "ruc": null,
+        "razon_social": "MACE GROUP S.R.L"
+      },
+      {
+        "ruc": null,
+        "razon_social": "PERUANA DE INFORMATICA SOCIEDAD ANONIMA"
+      },
+      {
+        "ruc": null,
+        "razon_social": "GRUPO CONSTRUCTEC AYC SOCIEDAD ANONIMA"
+      },
+      {
+        "ruc": null,
+        "razon_social": "LA CRUZ SOLUTIONS E. I. R. L"
+      },
+      {
+        "ruc": null,
+        "razon_social": "BUYER PERU S.A.C"
+      },
+      {
+        "ruc": null,
+        "razon_social": "STIM SOCIEDAD ANONIMA CERRADA"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "13",
+    "archivos": 2,
+    "nomenclatura": "LP-ABR-8-2025-MDMM-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "postores": [
+      {
+        "ruc": "10460562207",
+        "razon_social": "ORTIZ TORRES CHRISTIAN JOHAN"
+      },
+      {
+        "ruc": "20612799017",
+        "razon_social": "KEYMAR GROUP E.I.R.L"
+      },
+      {
+        "ruc": "20605444831",
+        "razon_social": "JENSUR EMPRESA INDIVIDUAL DE RESPONSABILIDAD LIMITADA"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "14",
+    "archivos": 2,
+    "nomenclatura": "AS-SM-7-2025-GRP",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20530182038",
+        "razon_social": "GRUPO COMPUDATA PERUSOCIEDAD DE RESPONSABILIDAD"
+      },
+      {
+        "ruc": "20606156031",
+        "razon_social": "TML TRADING S.A.C"
+      }
+    ],
+    "incidencias": [
+      "no se localizó el requerimiento técnico"
+    ]
+  },
+  {
+    "expediente": "15",
+    "archivos": 1,
+    "nomenclatura": "LP-SM-2-2025-GRP",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20604673608",
+        "razon_social": "OPEN STORE NETWORKING S.A.C"
+      },
+      {
+        "ruc": "20605260889",
+        "razon_social": "CONSORCIO PIURA I"
+      },
+      {
+        "ruc": "20600815467",
+        "razon_social": "DK SOLUTIONS S.A.C"
+      }
+    ],
+    "incidencias": [
+      "sin documento de bases identificable"
+    ]
+  },
+  {
+    "expediente": "16",
+    "archivos": 2,
+    "nomenclatura": "LP-SM-2-2025-SAT-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20433448546",
+        "razon_social": "ORION ENTERPRISES S.A.C"
+      },
+      {
+        "ruc": "20607798860",
+        "razon_social": "SIDESYS S.A"
+      },
+      {
+        "ruc": "20611246286",
+        "razon_social": "BISSNETCORP S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "17",
+    "archivos": 2,
+    "nomenclatura": "LP-SM-1-2025-UNAJ/CS-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20369236874",
+        "razon_social": "STANDAR S.R.L"
+      },
+      {
+        "ruc": "20550024447",
+        "razon_social": "R & M PORTATILES SOCIEDAD ANONIMA CERRADA"
+      },
+      {
+        "ruc": "20606810769",
+        "razon_social": "CONSORCIO INTERACTIVO DIGITAL UNAJ"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "18",
+    "archivos": 2,
+    "nomenclatura": "LP-SM-61-2024-CS/GR",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20369236874",
+        "razon_social": "STANDAR S.R.L"
+      },
+      {
+        "ruc": "20605551590",
+        "razon_social": "PROTECNOLOGIA E.I.R.L"
+      },
+      {
+        "ruc": "20550024447",
+        "razon_social": "R & M PORTATILES SOCIEDAD ANONIMA CERRADA"
+      },
+      {
+        "ruc": "20606810769",
+        "razon_social": "CONSORCIO INTERACTIVO PUNO"
+      },
+      {
+        "ruc": "20605002880",
+        "razon_social": "MACE GROUP S.R.L"
+      },
+      {
+        "ruc": "20469317855",
+        "razon_social": "PC LINK SOCIEDAD ANONIMA CERRADA"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "2",
+    "archivos": 3,
+    "nomenclatura": "LP-SM-7-2025-MDY-1",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20369236874",
+        "razon_social": "STANDAR S.R.L"
+      },
+      {
+        "ruc": "20565738101",
+        "razon_social": "J & M SOLUCIONES TI S.A.C"
+      }
+    ],
+    "incidencias": [
+      "no se localizó el requerimiento técnico"
+    ]
+  },
+  {
+    "expediente": "20",
+    "archivos": 2,
+    "nomenclatura": "COMPRE-COMPRE-1-2026-MDSJU-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": "3840 x 2160 (4K UHD)",
+      "brillo_cdm2": 400.0,
+      "contraste": "1200:1",
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": 6.0,
+      "tecnologia_panel": "IPS / LCD",
+      "puntos_tactiles": 20,
+      "sistema_operativo": "Android 11",
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": 8.0,
+      "almacenamiento_gb": 64.0,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": "2 x 15W",
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.667,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "postores": [
+      {
+        "ruc": "20614114461",
+        "razon_social": "INVERSIONES CAPSUR E.I.R.L"
+      },
+      {
+        "ruc": "20609185679",
+        "razon_social": "SAN ANTONIO INVERSIONES SERVICIOS GENERALES S.A.C"
+      },
+      {
+        "ruc": "20610246029",
+        "razon_social": "PAREJA GROUP INVERSIONES Y SERVICIOS GENERALES S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "21",
+    "archivos": 2,
+    "nomenclatura": "CP-ABR-4-2026-UNSM/C-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20613520369",
+        "razon_social": "INFRAESTRUCTURA DIGITAL ANDINA S.A.C"
+      },
+      {
+        "ruc": "20511522987",
+        "razon_social": "WORLDSYS EMPRESA INDIVIDUAL DE RESPONSABILIDAD LIMITADA"
+      },
+      {
+        "ruc": "20567228071",
+        "razon_social": "CONSORCIO DENIS"
+      },
+      {
+        "ruc": "20519865476",
+        "razon_social": "OK COMPUTER S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "22",
+    "archivos": 1,
+    "nomenclatura": "COMPRE-COMPRE-2-2026-MDMM-1",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20607817155",
+        "razon_social": "EDIFICACIONES INTELIGENTES S.A.C"
+      },
+      {
+        "ruc": "20455045810",
+        "razon_social": "TECNOLOGIA DE COMUNICACIONES E.I.R.L"
+      },
+      {
+        "ruc": "20606469633",
+        "razon_social": "MEGA INVERSIONES KALLPA MULTISERVICIOS S.R.L"
+      }
+    ],
+    "incidencias": [
+      "sin documento de bases identificable"
+    ]
+  },
+  {
+    "expediente": "23",
+    "archivos": 2,
+    "nomenclatura": "COMPRE-COMPRE-66-2026-GRA",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      11,
+      12,
+      13
+    ],
+    "postores": [
+      {
+        "ruc": "20614069547",
+        "razon_social": "INVERSIONES MEGABSC S.A.C"
+      },
+      {
+        "ruc": "20574737461",
+        "razon_social": "INVERSIONES VINASE S.A.C"
+      },
+      {
+        "ruc": "10465439071",
+        "razon_social": "BERNA ORE ELIZABETH"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "25",
+    "archivos": 2,
+    "nomenclatura": "CONV-PROC-7-2025-PNSU",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20481682721",
+        "razon_social": "REDCOM SAC"
+      },
+      {
+        "ruc": "20552762267",
+        "razon_social": "SPEEDNET SOLUCIONES S.A.C"
+      },
+      {
+        "ruc": "20603168489",
+        "razon_social": "INTEC COMPANY S.A.C"
+      }
+    ],
+    "incidencias": [
+      "no se localizó el requerimiento técnico"
+    ]
+  },
+  {
+    "expediente": "3",
+    "archivos": 2,
+    "nomenclatura": "LP-SM-33-2024-GRJ/CS-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "postores": [
+      {
+        "ruc": "20486243164",
+        "razon_social": "WARE HOUSE PC EIRL"
+      },
+      {
+        "ruc": "20603573758",
+        "razon_social": "EDUBOARD E.I.R.L"
+      },
+      {
+        "ruc": "20604902887",
+        "razon_social": "BASTIAN GROUP S.A.C"
+      },
+      {
+        "ruc": "20604816646",
+        "razon_social": "CONSORCIO GMC"
+      },
+      {
+        "ruc": "20481066094",
+        "razon_social": "HARDTECH SOLUTIONS S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "4",
+    "archivos": 3,
+    "nomenclatura": null,
+    "specs": {
+      "tamano_pulgadas": 86.0,
+      "resolucion": "3840 x 2160 (4K UHD)",
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": "178°",
+      "tiempo_respuesta_ms": 8.0,
+      "tecnologia_panel": "ADSC o IPS o LCD o VA u OLED Relación de aspecto 16.09 Latencia de escritura 8-1",
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": "8 núcleos o superior Memoria RAM ARM 8 × A73 o superior Alma",
+      "ram_gb": null,
+      "almacenamiento_gb": 64.0,
+      "ops_requerido": true,
+      "ops_procesador": null,
+      "altavoces_w": "2 × 15 W",
+      "vida_util_horas": 50000.0,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.611,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "postores": [],
+    "incidencias": [
+      "sin reporte de postores"
+    ]
+  },
+  {
+    "expediente": "5",
+    "archivos": 2,
+    "nomenclatura": "LP-ABR-7-2025-MPI-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20605551590",
+        "razon_social": "PROTECNOLOGIA E.I.R.L"
+      },
+      {
+        "ruc": "20605002880",
+        "razon_social": "MACE GROUP S.R.L"
+      },
+      {
+        "ruc": "20602971571",
+        "razon_social": "MULTIMEDIA PC S.A.C"
+      },
+      {
+        "ruc": "20613520369",
+        "razon_social": "INFRAESTRUCTURA DIGITAL ANDINA S.A.C"
+      },
+      {
+        "ruc": "20603573758",
+        "razon_social": "EDUBOARD E.I.R.L"
+      },
+      {
+        "ruc": "20607904805",
+        "razon_social": "BUYER PERU S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "6",
+    "archivos": 2,
+    "nomenclatura": "LP-ABR-13-2025-UNHEVAL/OC-1",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": "3840 x 2160 (4K UHD)",
+      "brillo_cdm2": 400.0,
+      "contraste": null,
+      "angulo_vision": "178°",
+      "tiempo_respuesta_ms": 8.0,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": "Android 14",
+      "certificacion_edla": false,
+      "cpu": "8",
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": 3.0
+    },
+    "specs_cobertura": 0.5,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20555906138",
+        "razon_social": "NYTEC S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "7",
+    "archivos": 2,
+    "nomenclatura": "LP-SM-6-2025-MDY-1",
+    "specs": {
+      "tamano_pulgadas": 98.0,
+      "resolucion": "3840 x 2160 (4K UHD)",
+      "brillo_cdm2": null,
+      "contraste": "1200:1",
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": 8.0,
+      "tecnologia_panel": "con tecnología: IPS y/o VA y/o OLED  Rango de color: 1.07B (10-Bit) o 3 x HDMI",
+      "puntos_tactiles": null,
+      "sistema_operativo": "Android 13",
+      "certificacion_edla": true,
+      "cpu": "procesador Quad core A55 o SISTEMA OPERATIVO: ANDROID 13 CON",
+      "ram_gb": 8.0,
+      "almacenamiento_gb": 64.0,
+      "ops_requerido": true,
+      "ops_procesador": "Intel Core i7 13th Generación en adelante",
+      "altavoces_w": "15W x 2",
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.722,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20565738101",
+        "razon_social": "J & M SOLUCIONES TI S.A.C"
+      },
+      {
+        "ruc": "20603786301",
+        "razon_social": "MUR TECNOLOGIA S.A.C"
+      },
+      {
+        "ruc": "20605002880",
+        "razon_social": "MACE GROUP S.R.L"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "8",
+    "archivos": 2,
+    "nomenclatura": "LP-SM-1-2025-CS",
+    "specs": {
+      "tamano_pulgadas": null,
+      "resolucion": null,
+      "brillo_cdm2": null,
+      "contraste": null,
+      "angulo_vision": null,
+      "tiempo_respuesta_ms": null,
+      "tecnologia_panel": null,
+      "puntos_tactiles": null,
+      "sistema_operativo": null,
+      "certificacion_edla": false,
+      "cpu": null,
+      "ram_gb": null,
+      "almacenamiento_gb": null,
+      "ops_requerido": false,
+      "ops_procesador": null,
+      "altavoces_w": null,
+      "vida_util_horas": null,
+      "garantia_meses": null
+    },
+    "specs_cobertura": 0.111,
+    "paginas_requerimiento": [
+      1,
+      2,
+      3
+    ],
+    "postores": [
+      {
+        "ruc": "20519865476",
+        "razon_social": "OK COMPUTER S.A.C"
+      },
+      {
+        "ruc": "20613520369",
+        "razon_social": "INFRAESTRUCTURA DIGITAL ANDINA S.A.C"
+      },
+      {
+        "ruc": "20605002880",
+        "razon_social": "MACE GROUP S.R.L"
+      },
+      {
+        "ruc": "20550024447",
+        "razon_social": "R & M PORTATILES SOCIEDAD ANONIMA CERRADA"
+      },
+      {
+        "ruc": "20606422777",
+        "razon_social": "MARCOS CORPORATION TECHNOLOGY S.A.C"
+      },
+      {
+        "ruc": "20512442731",
+        "razon_social": "KIT SMART CORPORATION S.A.C"
+      }
+    ],
+    "incidencias": []
+  },
+  {
+    "expediente": "9",
+    "archivos": 2,
+    "nomenclatura": "LP-ABR-1-2025-CENEPRED-1",
+    "specs": null,
+    "specs_cobertura": 0.0,
+    "paginas_requerimiento": [],
+    "postores": [
+      {
+        "ruc": "20369236874",
+        "razon_social": "STANDAR S.R.L"
+      },
+      {
+        "ruc": "20530293298",
+        "razon_social": "ECHE & LIJARZA CONSULTORES E.I.R.L"
+      },
+      {
+        "ruc": "20536630954",
+        "razon_social": "F.P. TECNOLOGI Y SYSTEM S.A.C"
+      },
+      {
+        "ruc": "20486468913",
+        "razon_social": "PERU DATA CONSULT E.I.R.L"
+      },
+      {
+        "ruc": "20602037933",
+        "razon_social": "GV PROYECTOS S.A.C"
+      }
+    ],
+    "incidencias": [
+      "no se localizó el requerimiento técnico"
+    ]
+  }
+]

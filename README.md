@@ -53,6 +53,61 @@ python -m streamlit run src/dashboard.py
 ```
 (usa `python -m streamlit` si el comando `streamlit` no está en el PATH de tu terminal)
 
+## Antes de empezar: comprobar el entorno
+
+```bash
+python src/comprobar_entorno.py
+```
+
+Dice qué paquetes y herramientas faltan, con el comando exacto para
+instalarlos, y separa lo imprescindible de lo opcional. El dashboard y los
+cuatro extractores funcionan sin OCR ni lector de RAR; esos dos solo hacen
+falta para el pipeline de especificaciones.
+
+## Pipeline de especificaciones (bloque nuevo)
+
+Va de una licitación a la pregunta "¿qué marcas podían presentarse?".
+
+7) Listar los documentos de adjudicación de los procesos del rubro, a partir
+   de los paquetes OCDS ya descargados en `data/`:
+```bash
+python src/buscar_actas.py --anio 2025 --solo INTERACTIVA
+```
+Escribe un CSV con el `fileCode` de cada documento. Sin `--solo` incluye todo
+el rubro audiovisual, que es mucho más amplio que los paneles interactivos.
+
+8) Descargar y abrir un documento del expediente (PDF suelto, .rar, .zip o
+   contenedor anidado: se detecta por firma de bytes, no por extensión):
+```bash
+python src/descargar_documento.py --filecode <uuid> --extraer tmp/exp1
+python src/contenedores.py --diagnostico      # con qué se pueden abrir los .rar
+```
+
+9) Evaluar un requerimiento contra las fichas de BTOUCH y de la competencia:
+```bash
+python src/fichas.py                                    # inventario de fichas
+python src/evaluar_licitacion.py --demo                 # ejemplo de 86"
+python src/evaluar_licitacion.py --json data/resultado_extractor.json --resumen
+python src/evaluar_licitacion.py --json data/resultado_extractor.json --expediente 7
+```
+
+Qué hace cada módulo nuevo:
+
+- `src/comprobar_entorno.py` — qué falta instalar en este equipo
+- `src/contenedores.py` — identifica y abre lo que devuelve SEACE, y elige qué
+  documento del expediente le interesa al extractor
+- `src/descargar_documento.py` — descarga por `fileCode` (GET directo, sin sesión)
+- `src/buscar_actas.py` — localiza documentos de adjudicación y clasifica por
+  categoría de producto
+- `src/ocr.py` — texto nativo o OCR según haga falta, con caché
+- `src/extractor.py` — saca el requerimiento técnico en 18 campos
+- `src/fichas.py` — fichas estructuradas de BTOUCH y competidores
+- `src/evaluar_licitacion.py` — compara exigido contra ficha y dictamina
+
+Leer la sección 11 de `PROJECT_CONTEXT.md` antes de usarlo: la marca del
+producto adjudicado **no** se publica en los documentos de SEACE, y el motor de
+evaluación existe precisamente porque ese dato hay que inferirlo.
+
 ## Configuración
 Edita `config.yaml` para cambiar palabras clave, exclusiones, años y el
 Acuerdo Marco de Perú Compras a monitorear — sin tocar código.

@@ -1,16 +1,88 @@
-# Datos regenerables (se generan corriendo los extractores) -- NO subir a git.
+# ─────────────────────────────────────────────────────────────────────────────
+# Datos regenerables: se obtienen corriendo los extractores, no se versionan.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Paquetes OCDS anuales de SEACE: 120-155 MB cada uno. GitHub rechaza
+# cualquier archivo de más de 100 MB, así que estos no pueden subir nunca.
 data/*.jsonl.gz
+
+# Listados y exportes que generan buscar_actas.py y el dashboard.
 data/*.csv
 data/*.xlsx
-data/perucompras_raw_test.txt
+
+# Volcados crudos de los modos --debug de los scrapers.
+data/*_raw_*.html
+data/*_raw_*.txt
+
+# Expedientes descargados de SEACE: documentos de terceros, pesados y
+# siempre recuperables por su fileCode.
+data/*.rar
+data/*.zip
+data/*.7z
+data/*.pdf
+
+# Se versionan a propósito, aunque estén en data/:
+#   licitaciones.db          base ya filtrada (~2 MB) que usa el dashboard en
+#                            Streamlit Cloud para mostrar datos sin correr
+#                            ningún extractor en la nube
+#   muestra.jsonl            fixture mínima para probar extract.py sin red
+#   resultado_extractor.json salida del extractor, la usa evaluar_licitacion.py
 !data/.gitkeep
 
-# data/licitaciones.db SI se sube: es la base ya filtrada y liviana (~2MB)
-# que usa el dashboard en Streamlit Cloud para tener datos sin correr nada
-# en la nube. Los .jsonl.gz crudos (100MB+) siguen fuera del repo.
+# ─────────────────────────────────────────────────────────────────────────────
+# Expedientes abiertos y cachés de trabajo
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Entornos virtuales / cache de Python
+# Acá caen los .rar y PDF que baja descargar_documento.py y lo que extrae
+# contenedores.py. Son documentos públicos de SEACE, pero son de terceros,
+# ocupan megas y se vuelven a bajar en segundos.
+tmp/
+
+# Caché de OCR (ocr.py). Se regenera, y una página rasterizada pesa más que
+# todo el código del proyecto junto.
+.cache_ocr/
+**/.cache_ocr/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
 .venv/
 venv/
-__pycache__/
-*.pyc
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Credenciales. Esto no es por prolijidad: una clave subida a un repo público
+# queda en la historia de git aunque después se borre el archivo.
+# ─────────────────────────────────────────────────────────────────────────────
+.env
+.env.*
+.streamlit/secrets.toml
+*.pem
+*.key
+credenciales*.json
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SQLite: archivos temporales que acompañan a la base mientras está abierta
+# ─────────────────────────────────────────────────────────────────────────────
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Editores y sistema operativo
+# ─────────────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Copias de respaldo
+*.bak
+*.orig
