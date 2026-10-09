@@ -1,0 +1,7 @@
+# Paquetes de sistema para Streamlit Cloud. Esa máquina arranca limpia en cada
+# despliegue, así que sin este archivo el panel de expediente no puede abrir
+# los .rar ni leer los PDF escaneados.
+tesseract-ocr
+tesseract-ocr-spa
+poppler-utils
+libarchive-tools

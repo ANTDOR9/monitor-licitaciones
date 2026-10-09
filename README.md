@@ -83,7 +83,13 @@ python src/descargar_documento.py --filecode <uuid> --extraer tmp/exp1
 python src/contenedores.py --diagnostico      # con qué se pueden abrir los .rar
 ```
 
-9) Evaluar un requerimiento contra las fichas de BTOUCH y de la competencia:
+9) Indexar los documentos del expediente, una sola vez por año. Deja la tabla
+   `documentos` en la base para que el tablero responda al instante:
+```bash
+python src/indexar_documentos.py --anios 2025 2026
+```
+
+10) Evaluar un requerimiento contra las fichas de BTOUCH y de la competencia:
 ```bash
 python src/fichas.py                                    # inventario de fichas
 python src/evaluar_licitacion.py --demo                 # ejemplo de 86"
@@ -103,6 +109,9 @@ Qué hace cada módulo nuevo:
 - `src/extractor.py` — saca el requerimiento técnico en 18 campos
 - `src/fichas.py` — fichas estructuradas de BTOUCH y competidores
 - `src/evaluar_licitacion.py` — compara exigido contra ficha y dictamina
+- `src/indexar_documentos.py` — vuelca los documentos del OCDS a la tabla `documentos`
+- `src/panel_expediente.py` — el panel del tablero: ficha del proceso y, detrás de
+  un botón, descarga, lectura y comparación contra BTOUCH
 
 Leer la sección 11 de `PROJECT_CONTEXT.md` antes de usarlo: la marca del
 producto adjudicado **no** se publica en los documentos de SEACE, y el motor de
@@ -200,3 +209,25 @@ Acuerdo Marco de Perú Compras a monitorear — sin tocar código.
 
 Datos: OCDS / OECE (ex OSCE), Perú Compras, PetroPerú y Banco de la Nación,
 licencia CC BY 4.0.
+
+
+## El panel de comparación dentro del tablero
+
+En la pestaña **Histórico de adjudicaciones**, al pie, hay un selector de
+proceso y un panel con dos capas.
+
+La primera aparece al instante y sale de la base: entidad, fecha, monto
+adjudicado, proveedor ganador, categoría y enlace a la ficha del SEACE.
+
+La segunda está detrás del botón **Analizar expediente y comparar con BTOUCH**.
+Descarga el documento, lo abre sea cual sea su formato, lo lee —con
+reconocimiento óptico si hace falta—, extrae el requerimiento técnico y lo
+compara contra las fichas de BTOUCH y de la competencia. Puede tardar de unos
+segundos a varios minutos y el resultado queda guardado en la sesión.
+
+Requiere haber corrido `python src/indexar_documentos.py` al menos una vez; si
+no, el panel lo avisa en lugar de fallar.
+
+Conviene saber que este análisis **falla seguido, y no por un defecto del
+panel**: solo cuatro de cada veintitrés expedientes entregan un requerimiento
+legible. Cuando no puede, el panel dice en qué paso se detuvo y por qué.

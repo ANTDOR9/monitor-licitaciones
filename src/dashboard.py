@@ -18,8 +18,11 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def cfg():
     return yaml.safe_load(open(os.path.join(BASE, "config.yaml"), encoding="utf-8"))
 
+def ruta_db():
+    return os.path.join(BASE, cfg()["salida"]["base_datos"])
+
 def leer(tabla):
-    db = os.path.join(BASE, cfg()["salida"]["base_datos"])
+    db = ruta_db()
     con = sqlite3.connect(db)
     try:
         df = pd.read_sql(f"SELECT * FROM {tabla}", con)
@@ -441,12 +444,33 @@ def vista_seace():
                 f[cols_mostrar].sort_values("fecha", ascending=False),
                 use_container_width=True, hide_index=True, height=altura_tabla(len(f)),
                 column_config={"enlace": st.column_config.LinkColumn(
-                    "Buscar en OECE", display_text="Buscar proceso")},
+                    "Ficha SEACE", display_text="Ver proceso")},
             )
             c1, c2 = st.columns(2)
             c1.metric("Licitaciones", len(f))
             c2.metric("Monto adjudicado total", f"S/ {f['monto_adjudicado'].fillna(0).sum():,.0f}")
             export_button(f[cols_mostrar], "historico_export.xlsx")
+
+            # ---------------------------------------------------------------
+            # Comparación contra BTOUCH. Vive en src/panel_expediente.py para
+            # que este archivo siga siendo solo el tablero.
+            # ---------------------------------------------------------------
+            st.divider()
+            st.subheader("🔍 Comparar un proceso contra las pantallas BTOUCH")
+
+            if not len(f):
+                st.caption("No hay procesos en el filtro actual.")
+            else:
+                import panel_expediente as pe
+
+                sel = f.sort_values("fecha", ascending=False).head(400).reset_index(drop=True)
+                def _etiqueta(i):
+                    r = sel.loc[i]
+                    return f"{(r.get('fecha') or '')[:10]} · {str(r.get('nomenclatura') or '')[:28]} · {str(r.get('entidad') or '')[:40]}"
+
+                j = st.selectbox("Proceso a analizar", range(len(sel)),
+                                 format_func=_etiqueta, key="sel_proceso_hist")
+                pe.render(sel.loc[j].to_dict(), ruta_db())
 
 # ================================================================
 # VISTA: PETROPERU (avisos de contratacion futura -- señal temprana)
